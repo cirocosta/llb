@@ -20,3 +20,11 @@ To make such decision, `llb` gathers the following information:
 
 Not having to deal with certificates at all, `llb` decides on domains at the L7 level by performing a very early parsing of TCP connections looking for the server indicated in the SNI extension.
 
+
+References:
+
+- https://github.com/cilium/cilium/blob/1a9be941a03d80fad43d9d6cd5aff234ba260aa9/bpf/lib/l4.h
+- https://github.com/cilium/cilium/blob/1a9be941a03d80fad43d9d6cd5aff234ba260aa9/bpf/bpf_lb.c 
+- https://qmonnet.github.io/whirl-offload/2017/02/11/implementing-openstate-with-ebpf/
+
+
