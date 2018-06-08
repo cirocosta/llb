@@ -27,5 +27,8 @@ References:
 - https://github.com/cilium/cilium/blob/1a9be941a03d80fad43d9d6cd5aff234ba260aa9/bpf/bpf_lb.c 
 - https://qmonnet.github.io/whirl-offload/2017/02/11/implementing-openstate-with-ebpf/
 - https://stackoverflow.com/a/21926971/2178180 (retrieving SNI w/out any certs)
+- https://www.netdevconf.org/1.1/proceedings/papers/On-getting-tc-classifier-fully-programmable-with-cls-bpf.pdf
+- https://archive.fosdem.org/2016/schedule/event/ebpf/attachments/slides/1159/export/events/attachments/ebpf/slides/1159/ebpf.pdf
+  - https://www.youtube.com/watch?v=GwT9hRiqdUo
 
 
