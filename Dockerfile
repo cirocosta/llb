@@ -17,3 +17,9 @@ RUN set -x && \
                 pkg-config \
                 bison \
                 flex
+
+RUN set -x && \
+        git clone git://git.kernel.org/pub/scm/network/iproute2/iproute2.git && \
+        cd ./iproute2 && \
+        ./configure && \
+        make install
