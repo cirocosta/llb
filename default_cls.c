@@ -1,4 +1,4 @@
-#include "/home/ubuntu/iproute2/include/bpf_api.h"
+#include <iproute2/bpf_api.h>
 
 __section("classifier") int cls_main(struct __sk_buff* skb)
 {
