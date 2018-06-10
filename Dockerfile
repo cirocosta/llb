@@ -1,4 +1,4 @@
-FROM ubuntu:bionic
+FROM golang:1.10-stretch
 
 RUN set -x && \
         apt update -y && \
@@ -24,3 +24,6 @@ RUN set -x && \
         ./configure && \
         make install && \
         install -m 0644 ./include/bpf_api.h /usr/include/iproute2
+
+ADD ./ /go/src/github.com/cirocosta/llb/
+WORKDIR /go/src/github.com/cirocosta/llb/
