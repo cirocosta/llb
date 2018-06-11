@@ -2,61 +2,90 @@
 #define __L4_H
 
 #include <iproute2/bpf_api.h>
+#include <linux/if_ether.h>
 #include <linux/in.h>
 #include <linux/ip.h>
 #include <linux/tcp.h>
 
 #include "./common.h"
 
-static inline int __inline__ l4_show_ports(struct __sk_buff* skb, int nh_off)
+static inline int __inline__ l4_tcp_room(void)
 {
-	int   ret = 0;
-	__u16 dport;
-	__u16 sport;
-	__u8  ip_proto;
-	__u8  ip_vl;
+	return sizeof(struct ethhdr) + sizeof(struct iphdr) +
+	       sizeof(struct tcphdr);
+}
 
-	ret = skb_load_bytes(skb,
-	                     nh_off + offsetof(struct iphdr, protocol),
-	                     &ip_proto,
-	                     sizeof(__u8));
-	if (ret < 1) {
-		printk("errored loading bytes (ip_proto)\n");
-		return ret;
+#define IPV4_HDR_LEN_NO_OPT 20
+#define PCKT_FRAGMENTED 65343
+
+/**
+ * Takes a sk_buff struct and prints to the trace utility
+ * what source and destination ports are set in the TCP
+ * package.
+ */
+static inline int __inline__ l4_show_ports(
+  struct __sk_buff* __attribute__((unused)) skb,
+  void* data,
+  void* data_end,
+  __u32 off)
+{
+	struct iphdr* ip;
+	struct tcphdr* tcp;
+
+	/**
+	 * Being the `ip` header the very next thing after the
+	 * ethernet header, we can just jump to that place from
+	 * the offset set in the parameters.
+	 */
+	ip = data + off;
+        off += sizeof(struct iphdr);
+
+	/**
+	 * Check whether the underlying data storage has enough
+	 * space filled to container at least the ip header in its
+	 * full size.
+	 */
+	if ((void*)ip + sizeof(struct iphdr) > data_end) {
+		printk("not enough data for proper iphdr struct\n");
+		return TC_ACT_UNSPEC;
 	}
 
-	if (ip_proto != IPPROTO_TCP) {
-		printk("ip_proto is not IPPROTO_TCP\n");
-		return 0;
+	/**
+	 * ihl stands for Internet Header Length, which is the length
+	 * of the ip header in 32-bit words.
+	 *
+	 * Given that the size of `struct iphdr` is 20 octets, we expect
+	 * the IHL to be set to 5:
+	 * > 5 * 32 == 160
+	 * > 20 * 8 == 160
+	 */
+	if (ip->ihl != 5) {
+		printk(
+		  "ip->ihl must equal to 5 to match the internal iphdr size\n");
+		return TC_ACT_UNSPEC;
 	}
 
-	ret = skb_load_bytes(skb, nh_off, &ip_vl, sizeof ip_vl);
-	if (ret < 1) {
-		printk("errored loading bytes (ip_vl)\n");
-		return ret;
+	if (ip->frag_off & PCKT_FRAGMENTED) {
+		printk("packet fragmented\n");
+		return TC_ACT_UNSPEC;
 	}
 
-	if (ip_vl == 0x45) {
-		nh_off += sizeof(struct iphdr);
-	} else {
-		nh_off += (ip_vl & 0xF) << 2;
+	if (ip->protocol != IPPROTO_TCP) {
+		printk("not tcp\n");
+		return TC_ACT_UNSPEC;
 	}
 
-	ret = skb_load_bytes(
-	  skb, nh_off + offsetof(struct tcphdr, dest), &dport, sizeof dport);
-	if (ret < 1) {
-		printk("errored loading bytes (dport)\n");
-		return ret;
-	}
+        // TODO verify
+//        tcp = data + off;
+//        if ((void*)tcp + sizeof(struct tcphdr) > data_end) {
+//        	printk("not enough data for proper iphdr struct\n");
+//        	return TC_ACT_UNSPEC;
+//        }
 
-	ret = skb_load_bytes(
-	  skb, nh_off + offsetof(struct tcphdr, source), &sport, sizeof sport);
-	if (ret < 1) {
-		printk("errored loading bytes (sport)\n");
-		return ret;
-	}
 
-	printk("src=%u,dst=%u\n", sport, dport);
+
+	////////tcp = data + sizeof(*eth) + sizeof(*ip);
+	////////printk("src=%u,dst=%u\n", tcp->source, tcp->dest);
 
 	return -1;
 }

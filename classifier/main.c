@@ -31,8 +31,23 @@
  */
 __section("classifier") int cls_main(struct __sk_buff* skb)
 {
-	int ret    = 0;
-	int nh_off = ETH_HLEN;
+	int            ret      = 0;
+	void*          data     = (void*)(long)skb->data;
+	void*          data_end = (void*)(long)skb->data_end;
+	struct ethhdr* eth;
+	__u32          off;
+
+	off = sizeof(struct ethhdr);
+	if (data + off > data_end) {
+		printk("packet w/out space for eth struct\n");
+		return TC_ACT_UNSPEC;
+	}
+
+	eth = data;
+	if (eth->h_proto != __constant_htons(ETH_P_IP)) {
+		printk("not an internet protocol packet\n");
+		return TC_ACT_UNSPEC;
+	}
 
 	/**
 	 * `skb->protocol` [1] corresponds to the packet protocol as seen
@@ -51,11 +66,11 @@ __section("classifier") int cls_main(struct __sk_buff* skb)
 	 *      [2]:
 	 * https://elixir.bootlin.com/linux/v4.15/source/include/uapi/linux/if_ether.h#L51
 	 */
-	if (skb->protocol != __constant_htons(ETH_P_IP)) {
-		return TC_ACT_UNSPEC;
-	}
+	// if (skb->protocol != __constant_htons(ETH_P_IP)) {
+	// 	return TC_ACT_UNSPEC;
+	// }
 
-	ret = l4_show_ports(skb, nh_off);
+	ret = l4_show_ports(skb, data, data_end, off);
 	return ret;
 }
 
