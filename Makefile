@@ -3,17 +3,17 @@ HOOK    ?= "egress"
 
 
 build:
-	clang -O2 -Wall -g -target bpf -c default_cls.c -o default_cls.o
-	clang -O2 -S -Wall -target bpf -c default_cls.c -o default_cls.S
+	clang -O2 -Wall -g -target bpf -c ./classifier/main.c -o ./classifier/main.o
+	clang -O2 -Wall -S -target bpf -c ./classifier/main.c -o ./classifier/main.S
 
 
 fmt:
-	find ./ -name "*.c" -o -name "*.h" | \
+	find ./classifier -name "*.c" -o -name "*.h" | \
 		xargs clang-format -style=file -i
 
 
 debug: build
-	llvm-objdump -S -no-show-raw-insn default_cls.o
+	llvm-objdump -S -no-show-raw-insn ./classifier/main.o
 
 
 see-logs:
@@ -28,7 +28,7 @@ setup-dev: build
 		dev $(DEVICE) \
 		$(HOOK) \
 		bpf da \
-		obj default_cls.o
+		obj ./classifier/main.o
 
 
 clean-dev:
