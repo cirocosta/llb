@@ -1,5 +1,5 @@
 DEVICE  ?= "lo"
-HOOK    ?= "egress"
+HOOK    ?= "ingress"
 
 
 build:
@@ -16,11 +16,11 @@ debug: build
 	llvm-objdump -S -no-show-raw-insn ./classifier/main.o
 
 
-see-logs:
+logs:
 	sudo tc exec bpf dbg
 
 
-setup-dev: build
+setup-device: clean-device build
 	sudo tc qdisc add \
 		dev $(DEVICE) \
 		clsact
@@ -31,14 +31,7 @@ setup-dev: build
 		obj ./classifier/main.o
 
 
-clean-dev:
+clean-device:
 	sudo tc qdisc del \
 		dev $(DEVICE) \
-		clsact
-	sudo tc filter del \
-		dev $(DEVICE) \
-		ingress || true
-	sudo tc filter del \
-		dev $(DEVICE) \
-		egress || true
-
+		clsact || true
