@@ -9,6 +9,7 @@ flags = [
 '-fexceptions',
 '-DNDEBUG',
 '-D_GNU_SOURCE',
+'-DUSE_CLANG_COMPLETER',
 '-std=c99',
 '-xc',
 '-I/usr/lib/',

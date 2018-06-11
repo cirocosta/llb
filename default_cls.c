@@ -1,13 +1,15 @@
-#include <iproute2/bpf_api.h>
+#include "./l4.h"
 
 __section("classifier") int cls_main(struct __sk_buff* skb)
 {
-	char fmt[] = "local_port=%u\n";
-        (void)skb;
+	int ret    = 0;
+	int nh_off = BPF_LL_OFF + ETH_HLEN;
 
-	trace_printk(fmt, sizeof(fmt), skb->local_port);
+	if (skb->protocol == __constant_htons(ETH_P_IP)) {
+		ret = l4_show_ports(skb, nh_off);
+	}
 
-	return TC_ACT_UNSPEC;
+	return ret;
 }
 
 BPF_LICENSE("GPL");
