@@ -15,9 +15,6 @@ static inline int __inline__ l4_tcp_room(void)
 	       sizeof(struct tcphdr);
 }
 
-#define IPV4_HDR_LEN_NO_OPT 20
-#define PCKT_FRAGMENTED 65343
-
 /**
  * Takes a sk_buff struct and prints to the trace utility
  * what source and destination ports are set in the TCP
@@ -62,11 +59,6 @@ static inline int __inline__ l4_show_ports(
 	if (ip->ihl != 5) {
 		printk(
 		  "ip->ihl must equal to 5 to match the internal iphdr size\n");
-		return TC_ACT_UNSPEC;
-	}
-
-	if (ip->frag_off & PCKT_FRAGMENTED) {
-		printk("packet fragmented\n");
 		return TC_ACT_UNSPEC;
 	}
 
