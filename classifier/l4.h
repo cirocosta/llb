@@ -29,7 +29,7 @@ static inline int __inline__ l4_show_ports(
   void* data_end,
   __u32 off)
 {
-	struct iphdr* ip;
+	struct iphdr*  ip;
 	struct tcphdr* tcp;
 
 	/**
@@ -38,7 +38,7 @@ static inline int __inline__ l4_show_ports(
 	 * the offset set in the parameters.
 	 */
 	ip = data + off;
-        off += sizeof(struct iphdr);
+	off += sizeof(struct iphdr);
 
 	/**
 	 * Check whether the underlying data storage has enough
@@ -75,17 +75,14 @@ static inline int __inline__ l4_show_ports(
 		return TC_ACT_UNSPEC;
 	}
 
-        // TODO verify
-//        tcp = data + off;
-//        if ((void*)tcp + sizeof(struct tcphdr) > data_end) {
-//        	printk("not enough data for proper iphdr struct\n");
-//        	return TC_ACT_UNSPEC;
-//        }
+	tcp = data + off;
+	if ((void*)tcp + sizeof(struct tcphdr) > data_end) {
+		printk("not enough data for proper tcphdr struct\n");
+		return TC_ACT_UNSPEC;
+	}
 
-
-
-	////////tcp = data + sizeof(*eth) + sizeof(*ip);
-	////////printk("src=%u,dst=%u\n", tcp->source, tcp->dest);
+	printk("src=%u:%u\n", htonl(ip->saddr), htons(tcp->source));
+	printk("dst=%u:%u\n", htonl(ip->daddr), htons(tcp->dest));
 
 	return -1;
 }
