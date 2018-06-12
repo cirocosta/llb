@@ -3,20 +3,22 @@ FROM golang:1.10-stretch
 RUN set -x && \
         apt update -y && \
         apt install -y \
-                make \
-                gcc \
-                libssl-dev \
                 bc \
-                libelf-dev \
-                libcap-dev \
-                clang \
-                gcc-multilib \
-                llvm \
-                libncurses5-dev \
-                git \
-                pkg-config \
                 bison \
-                flex
+                clang \
+                flex \
+                gcc \
+                gcc-multilib \
+                git \
+                libbfd \
+                libcap-dev \
+                libelf-dev \
+                libncurses5-dev \
+                libssl-dev \
+                llvm \
+                make \
+                pkg-config
+
 
 RUN set -x && \
         git clone git://git.kernel.org/pub/scm/network/iproute2/iproute2.git && \
