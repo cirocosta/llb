@@ -1,10 +1,20 @@
 DEVICE  ?= "lo"
 HOOK    ?= "ingress"
+VERSION ?= $(shell cat ./VERSION.txt)
 
 
 build:
-	clang -O2 -Wall -g -target bpf -c ./classifier/main.c -o ./classifier/main.o
-	clang -O2 -Wall -S -target bpf -c ./classifier/main.c -o ./classifier/main.S
+	go install \
+		-ldflags "-X main.version=$(VERSION)" \
+		-v
+	clang -O2 -Wall -g \
+		-target bpf \
+		-c ./classifier/main.c \
+		-o ./classifier/main.o
+	clang -O2 -Wall -S \
+		-target bpf \
+		-c ./classifier/main.c \
+		-o ./classifier/main.S
 
 
 fmt:

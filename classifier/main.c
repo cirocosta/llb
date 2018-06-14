@@ -1,6 +1,14 @@
 #include "./l4.h"
 #include <linux/if_ether.h>
 
+struct bpf_elf_map __section_maps map_sh_2 = {
+	.type       = BPF_MAP_TYPE_ARRAY,
+	.size_key   = sizeof(uint32_t),
+	.size_value = sizeof(uint32_t),
+	.pinning    = PIN_GLOBAL_NS,
+	.max_elem   = 1,
+};
+
 /**
  * This classifier takes a packet in its already parsed form
  * (sk_buff) and then reads information contained in it if
