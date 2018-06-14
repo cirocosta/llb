@@ -30,6 +30,10 @@
   name = "github.com/alexflint/go-arg"
 
 [[constraint]]
+  name = "github.com/pkg/errors"
+  version = "0.8.0"
+
+[[constraint]]
   name = "github.com/rs/zerolog"
   version = "1.8.0"
 

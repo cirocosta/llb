@@ -1,5 +1,7 @@
 FROM ubuntu:bionic
 
+ENV GOPATH=/go
+
 RUN set -x && \
         apt update -y && \
         apt install -y \
