@@ -14,6 +14,12 @@
   revision = "e80c3b7ed292b052c7083b6fd7154a8422c33f65"
 
 [[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
+
+[[projects]]
   name = "github.com/rs/zerolog"
   packages = [
     ".",
@@ -27,6 +33,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "268bfee258fd63550d2c2a312f29335f918feb5bd4d8dd2843954ad3e7eede18"
+  inputs-digest = "b8ffe478e989bb2a73dc0a5f77e131896fbf2e6e475400b28e1f69917980363c"
   solver-name = "gps-cdcl"
   solver-version = 1

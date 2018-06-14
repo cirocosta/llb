@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/alexflint/go-arg"
+	"github.com/cirocosta/llb/bpf"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -22,6 +23,16 @@ var (
 	}
 )
 
+func must(err error) {
+	if err == nil {
+		return
+	}
+
+	log.Fatal().
+		Err(err).
+		Msg("stopping execution")
+}
+
 func main() {
 	arg.MustParse(args)
 
@@ -33,4 +44,9 @@ func main() {
 	if args.Debug {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	}
+
+	fd, err := bpf.GetMapFd(llbBackendsArr)
+	must(err)
+
+	log.Info().Int("fd", fd).Msg("fd retrieved")
 }

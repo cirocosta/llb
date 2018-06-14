@@ -4,17 +4,15 @@ VERSION ?= $(shell cat ./VERSION.txt)
 
 
 build:
-	go install \
+	go build \
 		-ldflags "-X main.version=$(VERSION)" \
+		-i \
+		-o ./llb \
 		-v
 	clang -O2 -Wall -g \
 		-target bpf \
 		-c ./classifier/main.c \
 		-o ./classifier/main.o
-	clang -O2 -Wall -S \
-		-target bpf \
-		-c ./classifier/main.c \
-		-o ./classifier/main.S
 
 
 fmt:
