@@ -1,12 +1,38 @@
-#include "./l4.h"
 #include <linux/if_ether.h>
 
-struct bpf_elf_map __section_maps map_sh_2 = {
+#include "./l4.h"
+#include "./lb.h"
+
+#define LLB_BACKENDS_ARR_MAX_ELEM 256
+#define LLB_CONNECTIONS_MAP_MAX_ELEM 256
+
+/**
+ * llb_backends_arr contains an array of all the backends that
+ * have been configured for load-balancing.
+ *
+ * Given a scheduling policy, llb should pick one backend
+ * from this list and submit the packets for it.
+ */
+struct bpf_elf_map __section_maps llb_backends_arr = {
 	.type       = BPF_MAP_TYPE_ARRAY,
-	.size_key   = sizeof(uint32_t),
-	.size_value = sizeof(uint32_t),
+	.size_key   = sizeof(__u32),
+	.size_value = sizeof(backend_t),
 	.pinning    = PIN_GLOBAL_NS,
-	.max_elem   = 1,
+	.max_elem   = LLB_BACKENDS_ARR_MAX_ELEM,
+};
+
+/**
+ * llb_connections_map introduces statefulness into the packet
+ * forwarding by keeping track of which backend has been chosen
+ * for a given packet such that we keep sending packets that
+ * correspond to a connection to a particular backend.
+ */
+struct bpf_elf_map __section_maps llb_connections_map = {
+	.type       = BPF_MAP_TYPE_HASH,
+	.size_key   = sizeof(connection_key_t),
+	.size_value = sizeof(backend_t),
+	.pinning    = PIN_GLOBAL_NS,
+	.max_elem   = LLB_CONNECTIONS_MAP_MAX_ELEM,
 };
 
 /**

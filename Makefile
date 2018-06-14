@@ -20,6 +20,9 @@ build:
 fmt:
 	find ./classifier -name "*.c" -o -name "*.h" | \
 		xargs clang-format -style=file -i
+	find ./bpf -name "*.c" -o -name "*.h" | \
+		xargs clang-format -style=file -i
+	go fmt ./...
 
 
 debug: build

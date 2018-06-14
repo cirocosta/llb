@@ -6,18 +6,23 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+const (
+	llbBackendsArr    = "llb_backends_arr"
+	llbConnectionsMap = "llb_connections_map"
+)
+
 type config struct {
 	Debug bool `arg:"help:enable debug logs"`
 }
 
 var (
 	version string = "dev"
-	args = &config{
+	args           = &config{
 		Debug: false,
 	}
 )
 
-func main () {
+func main() {
 	arg.MustParse(args)
 
 	log.Info().
@@ -29,4 +34,3 @@ func main () {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	}
 }
-
