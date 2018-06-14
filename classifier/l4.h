@@ -9,12 +9,6 @@
 
 #include "./common.h"
 
-static inline int __inline__ l4_tcp_room(void)
-{
-	return sizeof(struct ethhdr) + sizeof(struct iphdr) +
-	       sizeof(struct tcphdr);
-}
-
 /**
  * Takes a sk_buff struct and prints to the trace utility
  * what source and destination ports are set in the TCP
