@@ -41,3 +41,8 @@ func GetMapFd(path string) (fd int, err error) {
 
 	return
 }
+
+// TODO
+func LookupElemInMap(fd int, key unsafe.Pointer) (value unsafe.Pointer, err error) {
+	return
+}

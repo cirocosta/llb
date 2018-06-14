@@ -15,6 +15,27 @@ int
 bpf_obj_get(const char* pathname);
 
 /**
+ * Look up an element by key in a specified map
+ * and return its value.
+ */
+int
+bpf_map_lookup_elem(int fd, const void* key, void* value);
+
+/**
+ * Look up and delete an element by key in a
+ * specified map.
+ */
+int
+bpf_map_delete_elem(int fd, const void* key);
+
+/**
+ * Create or update an element (key/value pair)
+ * in a specified map.
+ */
+int
+bpf_map_update_elem(int fd, const void* key, const void* value, __u64 flags);
+
+/**
  * Converts a void pointer to __u64.
  *
  * This helper function is used to pass a string
