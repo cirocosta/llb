@@ -1,4 +1,4 @@
-FROM golang:1.10-stretch
+FROM ubuntu:bionic
 
 RUN set -x && \
         apt update -y && \
@@ -10,6 +10,7 @@ RUN set -x && \
                 gcc \
                 gcc-multilib \
                 git \
+                golang-go \
                 libbfd \
                 libcap-dev \
                 libelf-dev \
