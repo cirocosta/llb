@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	llbBackendsArr    = "llb_backends_arr"
-	llbConnectionsMap = "llb_connections_map"
+	llbBackendsArr    = "/sys/fs/bpf/tc/globals/llb_backends_arr"
+	llbConnectionsMap = "/sys/fs/bpf/tc/globals/llb_connections_map"
 )
 
 type config struct {
