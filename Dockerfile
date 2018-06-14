@@ -4,6 +4,7 @@ RUN set -x && \
         apt update -y && \
         apt install -y \
                 bc \
+                binutils-dev \
                 bison \
                 clang \
                 flex \
@@ -11,7 +12,6 @@ RUN set -x && \
                 gcc-multilib \
                 git \
                 golang-go \
-                libbfd \
                 libcap-dev \
                 libelf-dev \
                 libncurses5-dev \
