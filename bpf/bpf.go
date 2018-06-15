@@ -5,6 +5,7 @@ package bpf
 import "C"
 
 import (
+	"syscall"
 	"unsafe"
 
 	"github.com/pkg/errors"
@@ -138,7 +139,7 @@ func GetMapFd(path string) (fd int, err error) {
 //
 // It makes use of the underlying `bpf(2)` syscall with BPF_MAP_UPDATE_ELEM
 // having the BPF_ANY flag set.
-func CreateOrUpdateElemInMap(fd int, key unsafe.Pointer, value unsafe.Pointer) (err error) {
+func CreateOrUpdateElemInMap(fd int, key, value unsafe.Pointer) (err error) {
 	_, err = C.bpf_map_update_elem(C.int(fd), key, value, C.BPF_ANY)
 	if err != nil {
 		err = errors.Wrapf(err,
@@ -151,13 +152,20 @@ func CreateOrUpdateElemInMap(fd int, key unsafe.Pointer, value unsafe.Pointer) (
 
 // LookupElemInMap looks at the map specified  by a file
 // descriptor (`fd`), gathering a value from a given key.
-func LookupElemInMap(fd int, key unsafe.Pointer) (value unsafe.Pointer, err error) {
+func LookupElemInMap(fd int, key, value unsafe.Pointer) (found bool, err error) {
 	_, err = C.bpf_map_lookup_elem(C.int(fd), key, value)
 	if err != nil {
+		errno := err.(syscall.Errno)
+		if errno == C.ENOENT {
+			err = nil
+			return
+		}
+
 		err = errors.Wrapf(err,
 			"failed to lookup elem in map %d", fd)
 		return
 	}
 
+	found = true
 	return
 }

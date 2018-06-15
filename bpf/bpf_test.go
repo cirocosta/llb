@@ -3,7 +3,9 @@ package bpf
 import (
 	"io/ioutil"
 	"os"
+	"syscall"
 	"testing"
+	"unsafe"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -25,7 +27,7 @@ func TestBpf_CreateMap(t *testing.T) {
 				KeySize:    16,
 				ValueSize:  4,
 				MaxEntries: 10,
-				Name:       "bad_arr",
+				Name:       "test_map",
 			},
 			shouldError: true,
 		},
@@ -36,7 +38,7 @@ func TestBpf_CreateMap(t *testing.T) {
 				KeySize:    4,
 				ValueSize:  4,
 				MaxEntries: 10,
-				Name:       "good_arr",
+				Name:       "test_map",
 			},
 			shouldError: false,
 		},
@@ -47,7 +49,7 @@ func TestBpf_CreateMap(t *testing.T) {
 				KeySize:    16,
 				ValueSize:  4,
 				MaxEntries: 10,
-				Name:       "good_hash",
+				Name:       "test_map",
 			},
 			shouldError: false,
 		},
@@ -58,7 +60,7 @@ func TestBpf_CreateMap(t *testing.T) {
 				KeySize:    0,
 				ValueSize:  4,
 				MaxEntries: 10,
-				Name:       "bad_hash_key",
+				Name:       "test_map",
 			},
 			shouldError: true,
 		},
@@ -69,7 +71,7 @@ func TestBpf_CreateMap(t *testing.T) {
 				KeySize:    4,
 				ValueSize:  0,
 				MaxEntries: 10,
-				Name:       "bad_hash_value",
+				Name:       "test_map",
 			},
 			shouldError: true,
 		},
@@ -88,6 +90,7 @@ func TestBpf_CreateMap(t *testing.T) {
 				return
 			}
 			assert.NoError(t, err)
+			syscall.Close(fd)
 		})
 	}
 
@@ -103,6 +106,7 @@ func TestBpf_PinMap_failsIfNotBpfMount(t *testing.T) {
 		Name:       "test_map",
 	})
 	assert.NoError(t, err)
+	defer syscall.Close(fd)
 
 	dir, err := ioutil.TempDir("/tmp", "")
 	assert.NoError(t, err)
@@ -121,6 +125,7 @@ func TestBpf_getMapFd(t *testing.T) {
 		Name:       "test_map",
 	})
 	assert.NoError(t, err)
+	defer syscall.Close(fd)
 
 	bpfDir, err := ioutil.TempDir("/sys/fs/bpf", "")
 	assert.NoError(t, err)
@@ -132,4 +137,33 @@ func TestBpf_getMapFd(t *testing.T) {
 	retrievedFd, err := GetMapFd(bpfDir + "/test_map")
 	assert.NoError(t, err)
 	assert.True(t, retrievedFd > 0)
+}
+
+type Key struct {
+	field1, field2 uint8
+}
+
+type Value struct {
+	field1, field2 uint8
+}
+
+func TestBpf_lookupElem_doesntErrorIfDoesntExist(t *testing.T) {
+	var (
+		key   = Key{1, 2}
+		value Value
+	)
+
+	fd, err := CreateMap(&MapConfig{
+		Type:       MapTypeHash,
+		KeySize:    uint32(unsafe.Sizeof(key)),
+		ValueSize:  uint32(unsafe.Sizeof(value)),
+		MaxEntries: 10,
+		Name:       "test_map",
+	})
+	assert.NoError(t, err)
+	defer syscall.Close(fd)
+
+	found, err := LookupElemInMap(fd, unsafe.Pointer(&key), unsafe.Pointer(&value))
+	assert.NoError(t, err)
+	assert.False(t, found)
 }
