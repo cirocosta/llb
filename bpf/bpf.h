@@ -71,8 +71,17 @@ bpf_create_map(enum bpf_map_type map_type,
                const char*       name,
                __u32             key_size,
                __u32             value_size,
-               __u32             max_entries,
-               __u32             map_flags);
+               __u32             max_entries);
+
+/**
+ * Pins a map to a particular pathname under the BPF filesystem.
+ *
+ * The underlying syscall pins a file descriptor into the BPF filesystem,
+ * which is meant to be under the `/sys/fs/bpf` virtual filesystem
+ * but that can be under namespace beneath it.
+ */
+int
+bpf_obj_pin(int fd, const char* pathname);
 
 /**
  * Converts a void pointer to __u64.
@@ -96,11 +105,5 @@ sys_bpf(enum bpf_cmd cmd, union bpf_attr* attr, unsigned int size)
 {
 	return syscall(__NR_bpf, cmd, attr, size);
 }
-
-/**
- * Pins a map to a particular pathname.
- */
-int
-bpf_obj_pin(int fd, const char* pathname);
 
 #endif

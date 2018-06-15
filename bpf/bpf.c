@@ -68,8 +68,7 @@ bpf_create_map(enum bpf_map_type map_type,
                const char*       name,
                __u32             key_size,
                __u32             value_size,
-               __u32             max_entries,
-               __u32             map_flags)
+               __u32             max_entries)
 {
 
 	union bpf_attr attr;
@@ -82,7 +81,6 @@ bpf_create_map(enum bpf_map_type map_type,
 
 	attr.key_size    = key_size;
 	attr.value_size  = value_size;
-	attr.map_flags   = map_flags;
 	attr.map_type    = map_type;
 	attr.max_entries = max_entries;
 	memcpy(attr.map_name, name, name_len);
