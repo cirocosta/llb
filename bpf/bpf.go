@@ -171,6 +171,28 @@ func CreateOrUpdateElemInMap(fd int, key, value unsafe.Pointer) (err error) {
 	return
 }
 
+// GetNextKeyInMap looks up an element by key in a specified map and
+// sets the key of the next element.
+//
+// If `key` is nil, the first key found is set in `next`.
+func GetNextKeyInMap(fd int, key, next unsafe.Pointer) (lastElement bool, err error) {
+	_, err = C.bpf_map_get_next_key(C.int(fd), key, next)
+	if err != nil {
+		errno := err.(syscall.Errno)
+		if errno == C.ENOENT {
+			err = nil
+			lastElement = true
+			return
+		}
+
+		err = errors.Wrapf(err,
+			"coudn't find next key in map %d", fd)
+		return
+	}
+
+	return
+}
+
 // DeleteElemFromMap looks up and delete an element by key in a specified map.
 // If the element doesn't exist or an element has been indeed deleted,
 // no error is returned.

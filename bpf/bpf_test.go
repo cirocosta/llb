@@ -207,3 +207,55 @@ func TestBpf_lookupElem_hash_findsByKeyAfterUpdate(t *testing.T) {
 	assert.Equal(t, value1.field1, valueFound.field1)
 	assert.Equal(t, value1.field2, valueFound.field2)
 }
+
+func TestBpf_GetNextKeyInMap_hash_retrievesFirstAdded(t *testing.T) {
+	var (
+		key1     = Key{5, 5}
+		value1   = Value{5, 5}
+		key2     = Key{3, 3}
+		value2   = Value{3, 3}
+		keyFound Key
+	)
+
+	fd, err := CreateMap(&MapConfig{
+		Type:       MapTypeHash,
+		KeySize:    uint32(unsafe.Sizeof(key1)),
+		ValueSize:  uint32(unsafe.Sizeof(value1)),
+		MaxEntries: 10,
+		Name:       "test_map",
+	})
+	assert.NoError(t, err)
+	defer syscall.Close(fd)
+
+	err = CreateOrUpdateElemInMap(fd,
+		unsafe.Pointer(&key1),
+		unsafe.Pointer(&value1))
+	assert.NoError(t, err)
+
+	err = CreateOrUpdateElemInMap(fd,
+		unsafe.Pointer(&key2),
+		unsafe.Pointer(&value2))
+	assert.NoError(t, err)
+
+	lastElement, err := GetNextKeyInMap(fd,
+		nil,
+		unsafe.Pointer(&keyFound))
+	assert.NoError(t, err)
+	assert.False(t, lastElement)
+	assert.Equal(t, key1.field1, keyFound.field1)
+	assert.Equal(t, key1.field2, keyFound.field2)
+
+	lastElement, err = GetNextKeyInMap(fd,
+		unsafe.Pointer(&key1),
+		unsafe.Pointer(&keyFound))
+	assert.NoError(t, err)
+	assert.False(t, lastElement)
+	assert.Equal(t, key2.field1, keyFound.field1)
+	assert.Equal(t, key2.field2, keyFound.field2)
+
+	lastElement, err = GetNextKeyInMap(fd,
+		unsafe.Pointer(&key2),
+		unsafe.Pointer(&keyFound))
+	assert.NoError(t, err)
+	assert.True(t, lastElement)
+}

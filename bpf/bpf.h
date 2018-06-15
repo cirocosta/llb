@@ -61,6 +61,19 @@ bpf_map_update_elem(int fd, const void* key, const void* value, __u64 flags);
 /**
  * Look up an element by key in a specified map and
  * return the key of the next element.
+ *
+ * This method can be used to iterate over all elements in
+ * a given map.
+ *
+ * If key is found, the operation returns zero and sets
+ * the next_key pointer to the key of the next element.
+ *
+ * If key is not found (or key is NULL), the operation returns
+ * zero and sets * the next_key pointer to  the  key  of  the
+ * first  element.
+ *
+ * If key is the last element, -1 is returned and errno is set
+ * to ENOENT.
  */
 int
 bpf_map_get_next_key(int fd, const void* key, void* next_key);
