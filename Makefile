@@ -16,7 +16,8 @@ build:
 
 
 test:
-	sudo go test ./... -v
+	sudo env 'PATH=$(PATH)' \
+		go test ./... -v
 
 
 fmt:
