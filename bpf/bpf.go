@@ -133,8 +133,31 @@ func GetMapFd(path string) (fd int, err error) {
 	return
 }
 
+// CreateOrUpdateElemInMap creates or updates an element (key/value pair)
+// in a specified map.
+//
+// It makes use of the underlying `bpf(2)` syscall with BPF_MAP_UPDATE_ELEM
+// having the BPF_ANY flag set.
+func CreateOrUpdateElemInMap(fd int, key unsafe.Pointer, value unsafe.Pointer) (err error) {
+	_, err = C.bpf_map_update_elem(C.int(fd), key, value, C.BPF_ANY)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to create or update element in map %d", fd)
+		return
+	}
+
+	return
+}
+
 // LookupElemInMap looks at the map specified  by a file
 // descriptor (`fd`), gathering a value from a given key.
 func LookupElemInMap(fd int, key unsafe.Pointer) (value unsafe.Pointer, err error) {
+	_, err = C.bpf_map_lookup_elem(C.int(fd), key, value)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to lookup elem in map %d", fd)
+		return
+	}
+
 	return
 }

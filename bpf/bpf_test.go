@@ -18,6 +18,61 @@ func TestBpf_CreateMap(t *testing.T) {
 			desc:        "fails if no cfg supplied",
 			shouldError: true,
 		},
+		{
+			desc: "fails if array with wrong key size",
+			cfg: &MapConfig{
+				Type:       MapTypeArray,
+				KeySize:    16,
+				ValueSize:  4,
+				MaxEntries: 10,
+				Name:       "bad_arr",
+			},
+			shouldError: true,
+		},
+		{
+			desc: "array with key size of four",
+			cfg: &MapConfig{
+				Type:       MapTypeArray,
+				KeySize:    4,
+				ValueSize:  4,
+				MaxEntries: 10,
+				Name:       "good_arr",
+			},
+			shouldError: false,
+		},
+		{
+			desc: "hash with key size of any size",
+			cfg: &MapConfig{
+				Type:       MapTypeHash,
+				KeySize:    16,
+				ValueSize:  4,
+				MaxEntries: 10,
+				Name:       "good_hash",
+			},
+			shouldError: false,
+		},
+		{
+			desc: "fails if hash with key size 0",
+			cfg: &MapConfig{
+				Type:       MapTypeHash,
+				KeySize:    0,
+				ValueSize:  4,
+				MaxEntries: 10,
+				Name:       "bad_hash_key",
+			},
+			shouldError: true,
+		},
+		{
+			desc: "fails if hash with value size 0",
+			cfg: &MapConfig{
+				Type:       MapTypeHash,
+				KeySize:    4,
+				ValueSize:  0,
+				MaxEntries: 10,
+				Name:       "bad_hash_value",
+			},
+			shouldError: true,
+		},
 	}
 
 	var (
@@ -32,6 +87,7 @@ func TestBpf_CreateMap(t *testing.T) {
 				assert.Error(t, err)
 				return
 			}
+			assert.NoError(t, err)
 		})
 	}
 

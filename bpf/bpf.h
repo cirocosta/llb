@@ -43,6 +43,17 @@ bpf_map_delete_elem(int fd, const void* key);
 /**
  * Create or update an element (key/value pair)
  * in a specified map.
+ *
+ * On success, the operation returns zero.
+ *
+ * Available flags are:
+ *
+ * - BPF_ANY: Create a new element or update an existing element.
+ * - BPF_NOEXIST: Create a new element only if it did not exist.
+ * - BPF_EXIST: Update an existing element.
+ *
+ * On error, -1 is returned and errno is set to EINVAL, EPERM,
+ * ENOMEM, or E2BIG.
  */
 int
 bpf_map_update_elem(int fd, const void* key, const void* value, __u64 flags);
