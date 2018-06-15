@@ -172,10 +172,11 @@ func TestBpf_lookupElem_hash_doesntErrorIfDoesntExist(t *testing.T) {
 
 func TestBpf_lookupElem_hash_findsByKeyAfterUpdate(t *testing.T) {
 	var (
-		key1   = Key{1, 1}
-		value1 = Value{1, 1}
-		key2   = Key{2, 2}
-		value2 = Value{2, 2}
+		key1       = Key{1, 1}
+		value1     = Value{1, 1}
+		key2       = Key{2, 2}
+		value2     = Value{2, 2}
+		valueFound Value
 	)
 
 	fd, err := CreateMap(&MapConfig{
@@ -200,7 +201,9 @@ func TestBpf_lookupElem_hash_findsByKeyAfterUpdate(t *testing.T) {
 
 	found, err := LookupElemInMap(fd,
 		unsafe.Pointer(&key1),
-		unsafe.Pointer(&value1))
+		unsafe.Pointer(&valueFound))
 	assert.NoError(t, err)
 	assert.True(t, found)
+	assert.Equal(t, value1.field1, valueFound.field1)
+	assert.Equal(t, value1.field2, valueFound.field2)
 }
