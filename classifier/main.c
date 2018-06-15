@@ -13,6 +13,9 @@
  *
  * Given a scheduling policy, llb should pick one backend
  * from this list and submit the packets for it.
+ *
+ * This array is meant to be updated (and initialized) from
+ * userspace only.
  */
 struct bpf_elf_map __section_maps llb_backends_arr = {
 	.type       = BPF_MAP_TYPE_ARRAY,

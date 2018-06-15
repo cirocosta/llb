@@ -21,7 +21,9 @@ typedef struct backend {
  * connections to backends.
  */
 typedef struct connection_key {
+	// The IPV4 address of the source connection.
 	__u32 address;
+	// The port of the source connection.
 	__u16 port;
 } connection_key_t;
 

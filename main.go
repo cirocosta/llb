@@ -13,13 +13,15 @@ const (
 )
 
 type config struct {
-	Debug bool `arg:"help:enable debug logs"`
+	Debug    bool     `arg:"help:enable debug logs"`
+	Backends []string `arg:"--backend,help:address (including ports) to route to"`
 }
 
 var (
 	version = "dev"
 	args    = &config{
-		Debug: false,
+		Debug:    false,
+		Backends: []string{},
 	}
 )
 

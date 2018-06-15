@@ -7,12 +7,13 @@ build:
 	go build \
 		-ldflags "-X main.version=$(VERSION)" \
 		-i \
-		-o ./llb \
+		-o ./build/llb \
 		-v
 	clang -O2 -Wall -g \
 		-target bpf \
 		-c ./classifier/main.c \
 		-o ./classifier/main.o
+.PHONY: build
 
 
 test:
