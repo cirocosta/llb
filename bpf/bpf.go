@@ -42,7 +42,8 @@ func GetMapFd(path string) (fd int, err error) {
 	return
 }
 
-// TODO
+// LookupElemInMap looks at the map specified  by a file
+// descriptor (`fd`), gathering a value from a given key.
 func LookupElemInMap(fd int, key unsafe.Pointer) (value unsafe.Pointer, err error) {
 	return
 }

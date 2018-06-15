@@ -15,6 +15,10 @@ build:
 		-o ./classifier/main.o
 
 
+test:
+	go test ./... -v
+
+
 fmt:
 	find ./classifier -name "*.c" -o -name "*.h" | \
 		xargs clang-format -style=file -i

@@ -34,4 +34,5 @@ ADD ./ /go/src/github.com/cirocosta/llb/
 WORKDIR /go/src/github.com/cirocosta/llb/
 
 RUN set -x && \
+        make test && \
         make
