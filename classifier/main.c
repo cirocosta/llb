@@ -76,12 +76,6 @@ __section("classifier") int cls_main(struct __sk_buff* skb)
 	endpoint_t dest     = { 0 };
 	__u32      off;
 
-	off = sizeof(struct ethhdr);
-	if (data + off > data_end) {
-		printk("packet w/out space for eth struct\n");
-		return TC_ACT_UNSPEC;
-	}
-
 	/**
 	 * `skb->protocol` [1] corresponds to the packet protocol as seen
 	 * from the driver.
@@ -103,6 +97,16 @@ __section("classifier") int cls_main(struct __sk_buff* skb)
 	 * we have access to it.
 	 */
 	if (skb->protocol != __constant_htons(ETH_P_IP)) {
+		return TC_ACT_UNSPEC;
+	}
+
+        /**
+         * Make sure that we'll be able to at least start extracting information
+         * from ethernet (link layer).
+         */
+	off = sizeof(struct ethhdr);
+	if (data + off > data_end) {
+		printk("packet w/out space for eth struct\n");
 		return TC_ACT_UNSPEC;
 	}
 
