@@ -10,18 +10,38 @@
 #include "./common.h"
 
 /**
- * Takes a sk_buff struct and prints to the trace utility
- * what source and destination ports are set in the TCP
- * package.
+ * endpoint_t represents a L4 endpoint that acts
+ * either as a client or a server in a connection.
  */
-static inline int __inline__ l4_show_ports(
-  struct __sk_buff* __attribute__((unused)) skb,
-  void* data,
-  void* data_end,
-  __u32 off)
+typedef struct endpoint {
+	// The IPV4 address of the source connection.
+	__u32 address;
+	// The port of the source connection.
+	__u16 port;
+} endpoint_t;
+
+/**
+ * Takes a skb data range extracts the corresponding L4 endpoints
+ * from it.
+ *
+ * Returns:
+ * - LLB_NOT_L4 if not tcp or udp; and
+ * - LLB_ERR on error.
+ */
+static inline int __inline__ l4_extract_endpoints(void*       data,
+                                                  void*       data_end,
+                                                  endpoint_t* source,
+                                                  endpoint_t* dest)
 {
 	struct iphdr*  ip;
 	struct tcphdr* tcp;
+	__u32          off;
+
+	/**
+	 * As the header that comes right before the IP header is
+	 * the ethrnet header, capture it.
+	 */
+	off = sizeof(struct ethhdr);
 
 	/**
 	 * Being the `ip` header the very next thing after the
@@ -38,7 +58,7 @@ static inline int __inline__ l4_show_ports(
 	 */
 	if ((void*)ip + sizeof(struct iphdr) > data_end) {
 		printk("not enough data for proper iphdr struct\n");
-		return TC_ACT_UNSPEC;
+		return LLB_NOT_L4;
 	}
 
 	/**
@@ -53,24 +73,33 @@ static inline int __inline__ l4_show_ports(
 	if (ip->ihl != 5) {
 		printk(
 		  "ip->ihl must equal to 5 to match the internal iphdr size\n");
-		return TC_ACT_UNSPEC;
+		return LLB_NOT_L4;
 	}
 
+	/**
+	 * Check if it's TCP - not handling UDP for now.
+	 */
 	if (ip->protocol != IPPROTO_TCP) {
 		printk("not tcp\n");
-		return TC_ACT_UNSPEC;
+		return LLB_NOT_L4;
 	}
 
+	/**
+	 * Verifiy whether the whole header struct can exist in the
+	 * packet.
+	 */
 	tcp = data + off;
 	if ((void*)tcp + sizeof(struct tcphdr) > data_end) {
 		printk("not enough data for proper tcphdr struct\n");
-		return TC_ACT_UNSPEC;
+		return LLB_MALFORMED_L4;
 	}
 
-	printk("src=%u:%u\n", htonl(ip->saddr), htons(tcp->source));
-	printk("dst=%u:%u\n", htonl(ip->daddr), htons(tcp->dest));
+	source->address = htonl(ip->saddr);
+	source->port    = htons(tcp->source);
+	dest->address   = htonl(ip->daddr);
+	dest->port      = htons(tcp->dest);
 
-	return -1;
+	return LLB_OK;
 }
 
 #endif

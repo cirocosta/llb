@@ -20,7 +20,7 @@
 struct bpf_elf_map __section_maps llb_h_bnx = {
 	.type       = BPF_MAP_TYPE_HASH,
 	.size_key   = sizeof(__u32),
-	.size_value = sizeof(backend_t),
+	.size_value = sizeof(endpoint_t),
 	.pinning    = PIN_GLOBAL_NS,
 	.max_elem   = LLB_BACKENDS_ARR_MAX_ELEM,
 };
@@ -33,8 +33,8 @@ struct bpf_elf_map __section_maps llb_h_bnx = {
  */
 struct bpf_elf_map __section_maps llb_h_cnx = {
 	.type       = BPF_MAP_TYPE_HASH,
-	.size_key   = sizeof(connection_key_t),
-	.size_value = sizeof(backend_t),
+	.size_key   = sizeof(endpoint_t),
+	.size_value = sizeof(endpoint_t),
 	.pinning    = PIN_GLOBAL_NS,
 	.max_elem   = LLB_CONNECTIONS_MAP_MAX_ELEM,
 };
@@ -69,21 +69,16 @@ struct bpf_elf_map __section_maps llb_h_cnx = {
  */
 __section("classifier") int cls_main(struct __sk_buff* skb)
 {
-	int            ret      = 0;
-	void*          data     = (void*)(long)skb->data;
-	void*          data_end = (void*)(long)skb->data_end;
-	struct ethhdr* eth;
-	__u32          off;
+	int        ret      = 0;
+	void*      data     = (void*)(long)skb->data;
+	void*      data_end = (void*)(long)skb->data_end;
+	endpoint_t source   = { 0 };
+	endpoint_t dest     = { 0 };
+	__u32      off;
 
 	off = sizeof(struct ethhdr);
 	if (data + off > data_end) {
 		printk("packet w/out space for eth struct\n");
-		return TC_ACT_UNSPEC;
-	}
-
-	eth = data;
-	if (eth->h_proto != __constant_htons(ETH_P_IP)) {
-		printk("not an internet protocol packet\n");
 		return TC_ACT_UNSPEC;
 	}
 
@@ -103,12 +98,22 @@ __section("classifier") int cls_main(struct __sk_buff* skb)
 	 *
 	 *      [2]:
 	 * https://elixir.bootlin.com/linux/v4.15/source/include/uapi/linux/if_ether.h#L51
+	 *
+	 * Given that the field is not reserver to a specific prog type,
+	 * we have access to it.
 	 */
-	// if (skb->protocol != __constant_htons(ETH_P_IP)) {
-	// 	return TC_ACT_UNSPEC;
-	// }
+	if (skb->protocol != __constant_htons(ETH_P_IP)) {
+		return TC_ACT_UNSPEC;
+	}
 
-	ret = l4_show_ports(skb, data, data_end, off);
+	ret = l4_extract_endpoints(data, data_end, &source, &dest);
+	if (ret != LLB_OK) {
+		return TC_ACT_UNSPEC;
+	}
+
+	printk("src(addr=%u,port=%u)\n", source.address, source.port);
+	printk("dst(addr=%u,port=%u)\n", dest.address, dest.port);
+
 	return ret;
 }
 
