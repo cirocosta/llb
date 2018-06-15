@@ -10,7 +10,7 @@ import (
 )
 
 // LlbConfig is the configuration to be used by the instantiator
-// (NewLlb).
+// (NewLlb) to create an Llb instance.
 type LlbConfig struct {
 	// BackendsMapFd corresponds to the file descriptor
 	// that corresponds to the bpf map that keeps track
@@ -22,11 +22,22 @@ type LlbConfig struct {
 	BackendsMapFd int
 }
 
+// Llb keeps track of backends state as well as providing ways of
+// configuring them.
 type Llb struct {
 	LlbConfig
 	logger zerolog.Logger
+
+	// backends keeps track of the backends configured
+	// for use.
+	//
+	// This is meant to be synced on every run of llb
+	// and updated atomically.
+	backends map[uint32]*Backend
 }
 
+// NewLLb instantiates a new Llb instance following the configuration
+// passed via LlbConfig.
 func NewLlb(cfg *LlbConfig) (l Llb) {
 	l.LlbConfig = *cfg
 	l.logger = log.With().
