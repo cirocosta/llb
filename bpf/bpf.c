@@ -66,9 +66,9 @@ bpf_map_get_next_key(int fd, const void* key, void* next_key)
 int
 bpf_create_map(enum bpf_map_type map_type,
                const char*       name,
-               int               key_size,
-               int               value_size,
-               int               max_entries,
+               __u32             key_size,
+               __u32             value_size,
+               __u32             max_entries,
                __u32             map_flags)
 {
 

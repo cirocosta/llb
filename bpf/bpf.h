@@ -18,6 +18,13 @@ bpf_obj_get(const char* pathname);
 /**
  * Look up an element by key in a specified map
  * and return its value.
+ *
+ * If an element is found, the operation returns
+ * zero and stores the element's value into value,
+ * which must point to a buffer of value_size bytes.
+ *
+ * If no element is found, the operation returns -1 and
+ * sets errno to ENOENT.
  */
 int
 bpf_map_lookup_elem(int fd, const void* key, void* value);
@@ -25,6 +32,10 @@ bpf_map_lookup_elem(int fd, const void* key, void* value);
 /**
  * Look up and delete an element by key in a
  * specified map.
+ *
+ * On success, zero is returned.
+ * If the element is not found, -1 is returned and errno
+ * is set to ENOENT.
  */
 int
 bpf_map_delete_elem(int fd, const void* key);
@@ -46,13 +57,21 @@ bpf_map_get_next_key(int fd, const void* key, void* next_key);
 /**
  * Create a map and return a file descriptor that refers
  * to the map.
+ *
+ * The new map has the type specified by map_type, and attributes
+ * as specified in key_size, value_size, and max_entries.
+ *
+ * On success, this operation returns a file descriptor.
+ *
+ * On  error, -1 is returned and errno is set to EINVAL, EPERM,
+ * or ENOMEM.
  */
 int
 bpf_create_map(enum bpf_map_type map_type,
                const char*       name,
-               int               key_size,
-               int               value_size,
-               int               max_entries,
+               __u32             key_size,
+               __u32             value_size,
+               __u32             max_entries,
                __u32             map_flags);
 
 /**
@@ -81,6 +100,7 @@ sys_bpf(enum bpf_cmd cmd, union bpf_attr* attr, unsigned int size)
 /**
  * Pins a map to a particular pathname.
  */
-int bpf_obj_pin(int fd, const char *pathname);
+int
+bpf_obj_pin(int fd, const char* pathname);
 
 #endif
