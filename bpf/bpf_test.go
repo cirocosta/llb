@@ -147,7 +147,7 @@ type Value struct {
 	field1, field2 uint8
 }
 
-func TestBpf_lookupElem_doesntErrorIfDoesntExist(t *testing.T) {
+func TestBpf_lookupElem_hash_doesntErrorIfDoesntExist(t *testing.T) {
 	var (
 		key   = Key{1, 2}
 		value Value
@@ -163,7 +163,44 @@ func TestBpf_lookupElem_doesntErrorIfDoesntExist(t *testing.T) {
 	assert.NoError(t, err)
 	defer syscall.Close(fd)
 
-	found, err := LookupElemInMap(fd, unsafe.Pointer(&key), unsafe.Pointer(&value))
+	found, err := LookupElemInMap(fd,
+		unsafe.Pointer(&key),
+		unsafe.Pointer(&value))
 	assert.NoError(t, err)
 	assert.False(t, found)
+}
+
+func TestBpf_lookupElem_hash_findsByKeyAfterUpdate(t *testing.T) {
+	var (
+		key1   = Key{1, 1}
+		value1 = Value{1, 1}
+		key2   = Key{2, 2}
+		value2 = Value{2, 2}
+	)
+
+	fd, err := CreateMap(&MapConfig{
+		Type:       MapTypeHash,
+		KeySize:    uint32(unsafe.Sizeof(key1)),
+		ValueSize:  uint32(unsafe.Sizeof(value1)),
+		MaxEntries: 10,
+		Name:       "test_map",
+	})
+	assert.NoError(t, err)
+	defer syscall.Close(fd)
+
+	err = CreateOrUpdateElemInMap(fd,
+		unsafe.Pointer(&key1),
+		unsafe.Pointer(&value1))
+	assert.NoError(t, err)
+
+	err = CreateOrUpdateElemInMap(fd,
+		unsafe.Pointer(&key2),
+		unsafe.Pointer(&value2))
+	assert.NoError(t, err)
+
+	found, err := LookupElemInMap(fd,
+		unsafe.Pointer(&key1),
+		unsafe.Pointer(&value1))
+	assert.NoError(t, err)
+	assert.True(t, found)
 }
