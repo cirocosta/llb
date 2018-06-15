@@ -1,3 +1,10 @@
+// Package bpf implements a set of methods to facilitate using the
+// `bpf(2)` syscall.
+//
+// Given that the compilation of the ebpf c-like syntax is
+// meant to be done beforehand (we're relying on tc object-file
+// mode), this tiny library only deals with maps - loading
+// is done directly with `tc` and compilation with `clang`.
 package bpf
 
 // #include <stdlib.h>
@@ -11,11 +18,25 @@ import (
 	"github.com/pkg/errors"
 )
 
+// MapType acts as an enumeration of the BPF_MAP_TYPE_*
+// variables that can be used with the `BPF_MAP_CREATE` command
+// of the `bpf(2)` syscall.
 type MapType uint32
 
 const (
+	// MapTypeUnspec corresponds to BPF_MAP_TYPE_UNSPEC,
+	// reserving 0 as an invalid map type.
 	MapTypeUnspec MapType = iota
+	// MapTypeHash corresponds to BPF_MAP_TYPE_HASH, an
+	// implementation of hash-tables that can have
+	// arbitrary key and value sizes.
 	MapTypeHash
+	// MapTypeArray corresponds to BPF_MAP_TYPE_ARRAY, an
+	// implementation of an array that has all of its
+	// elements initialized.
+	//
+	// It doesn't support `delete` operations and the
+	// key size must always correspond to 4 octets.
 	MapTypeArray
 )
 

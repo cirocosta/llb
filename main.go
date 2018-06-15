@@ -17,8 +17,8 @@ type config struct {
 }
 
 var (
-	version string = "dev"
-	args           = &config{
+	version = "dev"
+	args    = &config{
 		Debug: false,
 	}
 )
