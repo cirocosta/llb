@@ -3,13 +3,13 @@ package main
 import (
 	"github.com/alexflint/go-arg"
 	"github.com/cirocosta/llb/bpf"
+	_ "github.com/cirocosta/llb/llb"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
 const (
-	llbBackendsArr    = "/sys/fs/bpf/tc/globals/llb_backends_arr"
-	llbConnectionsMap = "/sys/fs/bpf/tc/globals/llb_connections_map"
+	llbBackendsArr = "/sys/fs/bpf/tc/globals/llb_backends_arr"
 )
 
 type config struct {
