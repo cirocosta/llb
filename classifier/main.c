@@ -5,6 +5,7 @@
 
 #define LLB_BACKENDS_ARR_MAX_ELEM 256
 #define LLB_CONNECTIONS_MAP_MAX_ELEM 256
+#define LLB_FRONTEND_PORT 8080
 
 /**
  * llb_backends_arr contains an array of all the backends that

@@ -171,6 +171,26 @@ func CreateOrUpdateElemInMap(fd int, key, value unsafe.Pointer) (err error) {
 	return
 }
 
+// DeleteElemFromMap looks up and delete an element by key in a specified map.
+// If the element doesn't exist or an element has been indeed deleted,
+// no error is returned.
+func DeleteElemFromMap(fd int, key unsafe.Pointer) (err error) {
+	_, err = C.bpf_map_delete_elem(C.int(fd), key)
+	if err != nil {
+		errno := err.(syscall.Errno)
+		if errno == C.ENOENT {
+			err = nil
+			return
+		}
+
+		err = errors.Wrapf(err,
+			"failed to delete elem from map %d", fd)
+		return
+	}
+
+	return
+}
+
 // LookupElemInMap looks at the map specified  by a file
 // descriptor (`fd`), gathering a value from a given key.
 func LookupElemInMap(fd int, key, value unsafe.Pointer) (found bool, err error) {
