@@ -17,8 +17,8 @@
  * This array is meant to be updated (and initialized) from
  * userspace only.
  */
-struct bpf_elf_map __section_maps llb_backends_arr = {
-	.type       = BPF_MAP_TYPE_ARRAY,
+struct bpf_elf_map __section_maps llb_h_bnx = {
+	.type       = BPF_MAP_TYPE_HASH,
 	.size_key   = sizeof(__u32),
 	.size_value = sizeof(backend_t),
 	.pinning    = PIN_GLOBAL_NS,
@@ -31,7 +31,7 @@ struct bpf_elf_map __section_maps llb_backends_arr = {
  * for a given packet such that we keep sending packets that
  * correspond to a connection to a particular backend.
  */
-struct bpf_elf_map __section_maps llb_connections_map = {
+struct bpf_elf_map __section_maps llb_h_cnx = {
 	.type       = BPF_MAP_TYPE_HASH,
 	.size_key   = sizeof(connection_key_t),
 	.size_value = sizeof(backend_t),

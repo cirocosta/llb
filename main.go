@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	llbBackendsArr = "/sys/fs/bpf/tc/globals/llb_backends_arr"
+	mapLlbHashBackends = "/sys/fs/bpf/tc/globals/llb_h_bnx"
 )
 
 type config struct {
@@ -47,7 +47,7 @@ func main() {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	}
 
-	fd, err := bpf.GetMapFd(llbBackendsArr)
+	fd, err := bpf.GetMapFd(mapLlbHashBackends)
 	must(err)
 
 	log.Info().Int("fd", fd).Msg("fd retrieved")

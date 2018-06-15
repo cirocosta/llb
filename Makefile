@@ -32,7 +32,9 @@ fmt:
 
 
 debug: build
-	llvm-objdump -S -no-show-raw-insn ./classifier/main.o
+	llvm-objdump -S \
+		-no-show-raw-insn \
+		./classifier/main.o
 
 
 logs:
@@ -54,3 +56,5 @@ clean-device:
 	sudo tc qdisc del \
 		dev $(DEVICE) \
 		clsact || true
+	sudo rm -f /sys/fs/bpf/tc/globals/llb_h_bnx || true
+	sudo rm -f /sys/fs/bpf/tc/globals/llb_h_cnx || true
