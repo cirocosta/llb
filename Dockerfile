@@ -20,7 +20,8 @@ RUN set -x && \
                 libssl-dev \
                 llvm \
                 make \
-                pkg-config
+                pkg-config \
+                sudo
 
 
 RUN set -x && \

@@ -79,6 +79,7 @@ bpf_create_map(enum bpf_map_type map_type,
 		return -1;
 	}
 
+	bzero(&attr, sizeof(attr));
 	attr.key_size    = key_size;
 	attr.value_size  = value_size;
 	attr.map_type    = map_type;

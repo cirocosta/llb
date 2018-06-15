@@ -50,6 +50,13 @@ type MapConfig struct {
 // In the case of the second (`MapTypeArray`), the
 // KeySize must be 4bytes (uint32) and can't have
 // `delete` operations.
+//
+// Once the map has been created, the returned `fd` can
+// be used to perform map operations.
+//
+// To have it available in the bpf fs, make use of
+// `PinMap` (otherwise, it'll not exist anymore after
+// the process that created it exits).
 func CreateMap(cfg *MapConfig) (fd int, err error) {
 	if cfg == nil {
 		err = errors.Errorf("cfg can't be nil")
