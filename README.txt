@@ -1,34 +1,33 @@
 llb - the low-level load balancer
 
-llb aims at being the load-balancing tear that takes incomming connections from customers and forward them to docker swarm clusters that should be responsible for handling such connections.
+llb aims at being the load-balancing tear that takes incomming connections from customers and forwards them to a set of machines that registered their interest in receiving these incoming packets.
 
-At a high level, it takes the job of deciding two which cluster load-balancer to forward traffic to based on who should handle such connection.
+It continuosly gather information about the list of backends from a given provider and makes sure that traffic is sent to them only when they're healthy.
 
 
-    connection 
-        |                     .---> cluster1-lb
+
+        while 1:
+                backends := provider.gather_backends()
+                for backend := range backends:
+                        llb.register_backend(backend)
+
+
+
+At a high level, it takes the job of deciding to which machines packets should be forwarded when they come.
+
+
+
+        (public)                        (private)
+
+
+    connection
+        |                     .--\  \---> (x) cluster1-lb       (unhealthy)
         |                     |
-        *----> llb -----------+---> cluster2-lb
-         Who should take      | 
-         this connection?     *---> cluster3-lb
+        *----> llb -----------+---------> cluster2-lb           (healthy)
+         Who should take      |
+         this connection?     *---------> cluster3-lb           (healthy)
 
 
-To make such decision, `llb` gathers the following information:
 
-- who should respond to l7 requests to a specific domain; and
-- who should answer to l4 connections to a specific port.
-
-Not having to deal with certificates at all, `llb` decides on domains at the L7 level by performing a very early parsing of TCP connections looking for the server indicated in the SNI extension.
-
-
-References:
-
-- https://github.com/cilium/cilium/blob/1a9be941a03d80fad43d9d6cd5aff234ba260aa9/bpf/lib/l4.h
-- https://github.com/cilium/cilium/blob/1a9be941a03d80fad43d9d6cd5aff234ba260aa9/bpf/bpf_lb.c 
-- https://qmonnet.github.io/whirl-offload/2017/02/11/implementing-openstate-with-ebpf/
-- https://stackoverflow.com/a/21926971/2178180 (retrieving SNI w/out any certs)
-- https://www.netdevconf.org/1.1/proceedings/papers/On-getting-tc-classifier-fully-programmable-with-cls-bpf.pdf
-- https://archive.fosdem.org/2016/schedule/event/ebpf/attachments/slides/1159/export/events/attachments/ebpf/slides/1159/ebpf.pdf
-  - https://www.youtube.com/watch?v=GwT9hRiqdUo
-
+Operating at kernel space, the data plane performs zero connections, acting more like a router that is aware of connections.
 

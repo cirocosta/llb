@@ -94,9 +94,13 @@ static inline int __inline__ l4_extract_endpoints(void*       data,
 		return LLB_MALFORMED_L4;
 	}
 
+	/**
+	 * Fill source and dest with the values all in network byte
+	 * order.
+	 */
 	source->address = htonl(ip->saddr);
-	source->port    = htons(tcp->source);
 	dest->address   = htonl(ip->daddr);
+	source->port    = htons(tcp->source);
 	dest->port      = htons(tcp->dest);
 
 	return LLB_OK;

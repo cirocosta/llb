@@ -123,6 +123,17 @@ __section("classifier") int cls_main(struct __sk_buff* skb)
 	printk("src(addr=%u,port=%u)\n", source.address, source.port);
 	printk("dst(addr=%u,port=%u)\n", dest.address, dest.port);
 
+	__u32      key              = 1;
+	backend_t* selected_backend = map_lookup_elem(&llb_h_bnx, &key);
+	if (!selected_backend) {
+		printk("no backend selected\n");
+		return TC_ACT_UNSPEC;
+	}
+
+	printk("backend selected: addr=%u,port=%u\n",
+	       selected_backend->address,
+	       selected_backend->port);
+
 	return ret;
 }
 

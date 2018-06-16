@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/binary"
+
 	"github.com/alexflint/go-arg"
 	"github.com/cirocosta/llb/bpf"
-	_ "github.com/cirocosta/llb/llb"
+	"github.com/cirocosta/llb/llb"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -50,5 +52,13 @@ func main() {
 	fd, err := bpf.GetMapFd(mapLlbHashBackends)
 	must(err)
 
-	log.Info().Int("fd", fd).Msg("fd retrieved")
+	lb := llb.New(&llb.Config{
+		BackendsMapFd: fd,
+	})
+
+	err = lb.AddBackendToMap(&llb.Backend{
+		Address: binary.LittleEndian.Uint32([]byte{172, 17, 0, 3}),
+		Port:    8000,
+	})
+	must(err)
 }

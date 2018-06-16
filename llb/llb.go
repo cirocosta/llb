@@ -9,9 +9,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// LlbConfig is the configuration to be used by the instantiator
+// Llb is the configuration to be used by the instantiator
 // (NewLlb) to create an Llb instance.
-type LlbConfig struct {
+type Config struct {
 	// BackendsMapFd corresponds to the file descriptor
 	// that corresponds to the bpf map that keeps track
 	// of possible backends to connect to.
@@ -25,7 +25,7 @@ type LlbConfig struct {
 // Llb keeps track of backends state as well as providing ways of
 // configuring them.
 type Llb struct {
-	LlbConfig
+	Config
 	logger zerolog.Logger
 
 	// backends keeps track of the backends configured
@@ -36,13 +36,17 @@ type Llb struct {
 	backends map[uint32]*Backend
 }
 
-// NewLLb instantiates a new Llb instance following the configuration
+// New instantiates a new Llb instance following the configuration
 // passed via LlbConfig.
-func NewLlb(cfg *LlbConfig) (l Llb) {
-	l.LlbConfig = *cfg
+func New(cfg *Config) (l Llb) {
+	l.Config = *cfg
 	l.logger = log.With().
 		Str("from", "llb").
 		Logger()
+
+	l.logger.Debug().
+		Int("backends-map-fd", cfg.BackendsMapFd).
+		Msg("instance created")
 	return
 }
 
@@ -57,6 +61,10 @@ func (l *Llb) GetBackendsFromMap() (backends map[uint32]*Backend, err error) {
 // AddBackendToMap adds a backend to the bpf that knows about
 // backends to route connections to.
 func (l *Llb) AddBackendToMap(backend *Backend) (err error) {
+	l.logger.Info().
+		Interface("backend", backend).
+		Msg("adding backend to map")
+
 	// TODO testing
 	var key uint32 = 1
 	err = bpf.CreateOrUpdateElemInMap(l.BackendsMapFd,
