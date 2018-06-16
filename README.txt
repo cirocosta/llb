@@ -1,8 +1,14 @@
-llb - the low-level load balancer
+LLB - the low-level load balancer
 
-llb aims at being the load-balancing tear that takes incomming connections from customers and forwards them to a set of machines that registered their interest in receiving these incoming packets.
 
-It continuosly gather information about the list of backends from a given provider and makes sure that traffic is sent to them only when they're healthy.
+LLB aims at being the load-balancing tier that takes incomming connections from customers and forwards them to a set of machines that registered their interest in receiving these incoming packets.
+
+It's made up of two components - one that sits at the control plane, and another, at the data plane:
+
+1.      A classifier stays in the hot path (traffic control), performing the necessary packet mangling; and
+2.      A Golang Daemon that controls the map of backends that the classifier should send traffic to.
+
+The daemon continuosly gather information about the list of backends from a given provider and makes sure that traffic is sent to them only when they're healthy.
 
 
         while 1:
@@ -11,7 +17,9 @@ It continuosly gather information about the list of backends from a given provid
                         llb.register_backend(backend)
 
 
-At a high level, it takes the job of deciding to which machines packets should be forwarded when they come.
+Whenever a new backend is meant to be registered, deregistered or marked (un)healthy, a map (that is shared between the daemon and the classifier) is updated.
+
+At a high level, LLB takes the job of deciding to which machines packets should be forwarded when they come.
 
 
         (public)                        (private)
@@ -84,5 +92,6 @@ During egress though, we have to perform the opposite: rewrite source and destin
         if (!new_pkt)
                 DROP
         ACCEPT
+
 
 Given that the table can grow forever, from time to time we need to remove the connections that have been terminated.
