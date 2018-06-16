@@ -17,7 +17,8 @@ build:
 
 
 test:
-	sudo env \
+	sudo -E \
+		env \
 		'PATH=$(PATH)' \
 		'GOPATH=$(GOPATH)' \
 			go test ./... -v
