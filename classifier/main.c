@@ -5,7 +5,7 @@
 
 #define LLB_BACKENDS_ARR_MAX_ELEM 256
 #define LLB_CONNECTIONS_MAP_MAX_ELEM 256
-#define LLB_FRONTEND_PORT 8080
+#define LLB_FRONTEND_PORT 8000
 
 /**
  * llb_backends_arr contains an array of all the backends that
@@ -100,10 +100,10 @@ __section("classifier") int cls_main(struct __sk_buff* skb)
 		return TC_ACT_UNSPEC;
 	}
 
-        /**
-         * Make sure that we'll be able to at least start extracting information
-         * from ethernet (link layer).
-         */
+	/**
+	 * Make sure that we'll be able to at least start extracting information
+	 * from ethernet (link layer).
+	 */
 	off = sizeof(struct ethhdr);
 	if (data + off > data_end) {
 		printk("packet w/out space for eth struct\n");
@@ -112,6 +112,11 @@ __section("classifier") int cls_main(struct __sk_buff* skb)
 
 	ret = l4_extract_endpoints(data, data_end, &source, &dest);
 	if (ret != LLB_OK) {
+		return TC_ACT_UNSPEC;
+	}
+
+	if (dest.port != LLB_FRONTEND_PORT) {
+		printk("packet not destinet to frontend port\n");
 		return TC_ACT_UNSPEC;
 	}
 
