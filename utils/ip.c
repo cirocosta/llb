@@ -9,13 +9,19 @@ main(int argc, char** argv)
 	__u8 ip_addr_le[4] = { 0 };
 	__u8 ip_addr_be[4] = { 0 };
         long  addr;
+        char* str_conv_end;
 
 	if (argc < 2) {
 		printf("Usage: ip <decimal>\n");
 		return 1;
 	}
 
-	addr = strtol(argv[1], NULL, 10);
+	addr = strtol(argv[1], &str_conv_end, 10);
+        if (str_conv_end == argv[1]) {
+		printf("Usage: ip <decimal>\n");
+		return 1;
+        }
+
 	ip_extract_address_be(addr, ip_addr_be);
 	ip_extract_address_le(addr, ip_addr_le);
 
