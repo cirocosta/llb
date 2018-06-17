@@ -1,0 +1,15 @@
+language: 'go'
+
+sudo: 'required'
+
+go:
+  - '1.10.x'
+
+install:
+  - './.travis/setup.sh'
+
+before_script:
+  - 'make'
+
+script:
+  - 'make test'
