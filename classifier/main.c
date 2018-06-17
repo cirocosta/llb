@@ -37,6 +37,7 @@
 
 __section("ingress") int cls_ingress(struct __sk_buff* skb)
 {
+	int   ret      = 0;
 	void* data     = (void*)(long)skb->data;
 	void* data_end = (void*)(long)skb->data_end;
 
@@ -45,6 +46,26 @@ __section("ingress") int cls_ingress(struct __sk_buff* skb)
 	}
 
 	if (l4_is_tcp_packet(data, data_end) & LLB_ERR) {
+		return TC_ACT_UNSPEC;
+	}
+
+	connection_t conn = { .src = { 0 }, .dst = { 0 } };
+	ret               = l4_extract_endpoints(data, data_end, &conn);
+	if (ret & LLB_ERR) {
+		return TC_ACT_UNSPEC;
+	}
+
+	printk("[ing] src(addr=%u,port=%u)\n", conn.src.address, conn.src.port);
+	printk("[ing] dst(addr=%u,port=%u)\n", conn.dst.address, conn.dst.port);
+
+	connection_t dnat_key = {
+		.src = conn.dst,
+		.dst = conn.src,
+	};
+
+	connection_t* existing_connection =
+	  map_lookup_elem(&llb_h_dnat, &dnat_key);
+	if (!existing_connection) {
 		return TC_ACT_UNSPEC;
 	}
 
@@ -72,8 +93,8 @@ __section("egress") int cls_egress(struct __sk_buff* __attribute__((unused))
 		return TC_ACT_UNSPEC;
 	}
 
-	printk("src(addr=%u,port=%u)\n", conn.src.address, conn.src.port);
-	printk("dst(addr=%u,port=%u)\n", conn.dst.address, conn.dst.port);
+	printk("[egr] src(addr=%u,port=%u)\n", conn.src.address, conn.src.port);
+	printk("[egr] dst(addr=%u,port=%u)\n", conn.dst.address, conn.dst.port);
 
 	if (conn.dst.port != LLB_FRONTEND_PORT) {
 		printk("packet not destinet to frontend port\n");
