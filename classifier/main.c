@@ -25,16 +25,18 @@ struct bpf_elf_map __section_maps llb_h_bnx = {
 	.max_elem   = LLB_BACKENDS_ARR_MAX_ELEM,
 };
 
-/**
- * llb_connections_map introduces statefulness into the packet
- * forwarding by keeping track of which backend has been chosen
- * for a given packet such that we keep sending packets that
- * correspond to a connection to a particular backend.
- */
-struct bpf_elf_map __section_maps llb_h_cnx = {
+struct bpf_elf_map __section_maps llb_h_snat = {
 	.type       = BPF_MAP_TYPE_HASH,
-	.size_key   = sizeof(endpoint_t),
-	.size_value = sizeof(endpoint_t),
+	.size_key   = sizeof(connection_t),
+	.size_value = sizeof(connection_t),
+	.pinning    = PIN_GLOBAL_NS,
+	.max_elem   = LLB_CONNECTIONS_MAP_MAX_ELEM,
+};
+
+struct bpf_elf_map __section_maps llb_h_dnat = {
+	.type       = BPF_MAP_TYPE_HASH,
+	.size_key   = sizeof(connection_t),
+	.size_value = sizeof(connection_t),
 	.pinning    = PIN_GLOBAL_NS,
 	.max_elem   = LLB_CONNECTIONS_MAP_MAX_ELEM,
 };
@@ -122,6 +124,14 @@ __section("classifier") int cls_main(struct __sk_buff* skb)
 	printk("src(addr=%u,port=%u)\n", conn.src.address, conn.src.port);
 	printk("dst(addr=%u,port=%u)\n", conn.dst.address, conn.dst.port);
 
+	connection_t* existing_connection = map_lookup_elem(&llb_h_dnat, &conn);
+	if (existing_connection) {
+		printk("connection already known\n");
+		return TC_ACT_UNSPEC;
+	}
+
+	// pick a backend
+
 	__u32       key              = 1;
 	endpoint_t* selected_backend = map_lookup_elem(&llb_h_bnx, &key);
 	if (!selected_backend) {
@@ -132,6 +142,39 @@ __section("classifier") int cls_main(struct __sk_buff* skb)
 	printk("backend selected: addr=%u,port=%u\n",
 	       selected_backend->address,
 	       selected_backend->port);
+
+	// route to that backend and keep track
+	// of the traffic that should go towards
+	// such backend.
+	connection_t new_conn = {
+		.src =
+		  {
+		    .address =
+		      (172 << 24 | 17 << 16 | 0 << 8 | 1), // our machine ip
+		    .port = conn.src.port,
+		  },
+		.dst =
+		  {
+		    .address = selected_backend->address,
+		    .port    = conn.src.port,
+		  },
+	};
+
+	map_update_elem(&llb_h_dnat, &conn, &new_conn, 0);
+
+	// keep track of the traffic that will come
+	// back from such connection.
+	connection_t snat_conn_key = {
+		.src = new_conn.dst,
+		.dst = new_conn.src,
+	};
+
+	connection_t snat_conn_value = {
+		.src = conn.dst,
+		.dst = conn.src,
+	};
+
+	map_update_elem(&llb_h_snat, &snat_conn_key, &snat_conn_value, 0);
 
 	return ret;
 }
