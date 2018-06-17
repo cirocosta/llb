@@ -1,14 +1,14 @@
 LLB - the low-level load balancer
 
 
-LLB aims at being the load-balancing tier that takes incomming connections from customers and forwards them to a set of machines that registered their interest in receiving these incoming packets.
+LLB aims at being the load-balancing tier that takes incoming connections from customers and forwards them to a set of machines that registered their interest in receiving these incoming packets.
 
 It's made up of two components - one that sits at the control plane, and another, at the data plane:
 
-1.      A classifier stays in the hot path (traffic control), performing the necessary packet mangling; and
+1.      A classifier stays on the hot path (traffic control), performing the necessary packet mangling; and
 2.      A Golang Daemon that controls the map of backends that the classifier should send traffic to.
 
-The daemon continuosly gather information about the list of backends from a given provider and makes sure that traffic is sent to them only when they're healthy.
+The daemon continuously gathers information about the list of backends from a given provider and makes sure that traffic is sent to them only when they're healthy.
 
 
         while 1:
@@ -37,7 +37,7 @@ Operating at kernel space, the data plane performs zero connections, acting more
 
 Having all the traffic passing through it, two tables are maintained: DNAT and SNAT.
 
-These tables have updates and lookups hapenning at both directions. For instance, at the ingress path (when the traffic is coming from the outside to the inside of the network):
+These tables have updates and lookups happenning at both directions. For instance, at the ingress path (when the traffic is coming from the outside to the inside of the network):
 
 
         INGRESS: !is_from_backend_cidr(pkt->saddr)
