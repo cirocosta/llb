@@ -13,29 +13,40 @@
 #define LLB_L4_OFF LLB_L3_OFF + sizeof(struct iphdr)
 #define LLB_L4_CSUM_OFF (LLB_L4_OFF + offsetof(struct tcphdr, check))
 
-static inline int __inline__ l4_replace_skb_daddr(struct __sk_buff* skb,
-                                                  __u32* daddr_before,
-                                                  __u32* daddr_after)
+// Replaces the address information (L3) of a given L4 packet by modifying
+// its SKB data an recalculating its checksums (at both L3 and L4).
+//
+// Given that there are two possible addresses to be modified, the right
+// offset must be provided to `iphdr_offset`:
+// - source:      offsetof(struct iphdr, saddr);
+// - destination: offsetof(struct iphdr, daddr);
+static inline int __inline__ l4_replace_skb_addr(struct __sk_buff* skb,
+                                                 __u32*            addr_before,
+                                                 __u32*            addr_after,
+                                                 __u32             iphdr_offset)
 {
 	int ret = 0;
 
-	ret = skb_store_bytes(
-	  skb,
-	  LLB_L3_OFF + offsetof(struct iphdr, daddr), // where in `skb->data`
-	  daddr_after, // pointer to where to copy `n` bytes from
-	  4,           // `n` bytes to copy
-	  0            // flags: 0th bit: if set -> recompute csum
-	);
+	// Replace the packet's address with the new one.
+	ret =
+	  skb_store_bytes(skb,
+	                  LLB_L3_OFF + iphdr_offset, // where in `skb->data`
+	                  addr_after, // pointer to where to copy `n` bytes from
+	                  4,          // `n` bytes to copy
+	                  0 // flags: 0th bit: if set -> recompute csum
+	  );
 	if (ret < 0) {
-		printk("couldn't store new daddr bytes in skb\n");
+		printk("couldn't store new addr bytes in skb\n");
 		return LLB_ERR;
 	}
 
+	// Replace the L4 checksum as the pseudo-headers (that keep track
+	// of the underlying l3 data) have changed.
 	ret = l4_csum_replace(
 	  skb,
 	  LLB_L4_CSUM_OFF, // where in `skb->data` the tcp checksum lives
-	  *daddr_before,   // address before
-	  *daddr_after,    // address after
+	  *addr_before,    // address before
+	  *addr_after,     // address after
 	  4 | (1 << 4)); // the first 3 bits indicate the size of the addr; the
 	                 // 4th, whether it's a pseudo header
 	if (ret != 0) {
@@ -43,8 +54,11 @@ static inline int __inline__ l4_replace_skb_daddr(struct __sk_buff* skb,
 		return LLB_ERR;
 	}
 
+	// Replace the L3 checksum as the L3 information changed.
+	// `l3_csum_replace` essentially takes the same arguments as the l4
+	// counterpart.
 	ret =
-	  l3_csum_replace(skb, LLB_L3_CSUM_OFF, *daddr_before, *daddr_after, 4);
+	  l3_csum_replace(skb, LLB_L3_CSUM_OFF, *addr_before, *addr_after, 4);
 	if (ret != 0) {
 		printk("failed to replace l3 csum\n");
 		return LLB_ERR;
@@ -53,6 +67,10 @@ static inline int __inline__ l4_replace_skb_daddr(struct __sk_buff* skb,
 	return LLB_OK;
 }
 
+/**
+ * Verifies whether the packet as described by its data is a
+ * tcp packet or not.
+ */
 static inline int __inline__ l4_is_tcp_packet(void* data, void* data_end)
 {
 	struct iphdr*  ip;

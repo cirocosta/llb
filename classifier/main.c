@@ -55,9 +55,6 @@ __section("ingress") int cls_ingress(struct __sk_buff* skb)
 		return TC_ACT_UNSPEC;
 	}
 
-	printk("[ing] src(addr=%u,port=%u)\n", conn.src.address, conn.src.port);
-	printk("[ing] dst(addr=%u,port=%u)\n", conn.dst.address, conn.dst.port);
-
 	connection_t dnat_key = {
 		.src = conn.dst,
 		.dst = conn.src,
@@ -93,80 +90,49 @@ __section("egress") int cls_egress(struct __sk_buff* __attribute__((unused))
 		return TC_ACT_UNSPEC;
 	}
 
+	if (conn.dst.port != LLB_FRONTEND_PORT) {
+		return TC_ACT_UNSPEC;
+	}
+
 	printk("[egr] src(addr=%u,port=%u)\n", conn.src.address, conn.src.port);
 	printk("[egr] dst(addr=%u,port=%u)\n", conn.dst.address, conn.dst.port);
 
-	if (conn.dst.port != LLB_FRONTEND_PORT) {
-		printk("packet not destinet to frontend port\n");
+	__u8 machine_ip[4]    = { 10, 0, 2, 15 };
+	__u8 destintion_ip[4] = { 172, 17, 0, 3 };
+
+	connection_t new_conn = { { 0 }, { 0 } };
+	new_conn.src.address  = l3_bytes_to_le32(machine_ip);
+	new_conn.src.port     = conn.src.port;
+	new_conn.dst.address  = l3_bytes_to_le32(destintion_ip);
+	new_conn.dst.port     = conn.dst.port;
+
+	printk("[egr] new_src(addr=%u,port=%u)\n",
+	       new_conn.src.address,
+	       new_conn.src.port);
+	printk("[egr] new_dst(addr=%u,port=%u)\n",
+	       new_conn.dst.address,
+	       new_conn.dst.port);
+
+	ret = map_update_elem(&llb_h_dnat, &conn, &new_conn, BPF_ANY);
+	if (ret != 0) {
 		return TC_ACT_UNSPEC;
 	}
 
-	connection_t* existing_connection = map_lookup_elem(&llb_h_dnat, &conn);
-	if (existing_connection) {
-		printk("connection already known\n");
-		return TC_ACT_UNSPEC;
-	}
-
-	// pick a backend
-
-	////////__u32       key              = 1;
-	////////endpoint_t* selected_backend = map_lookup_elem(&llb_h_bnx,
-	///&key);
-	////////if (!selected_backend) {
-	////////	printk("no backend selected\n");
-	////////	return TC_ACT_UNSPEC;
-	////////}
-
-	////////printk("backend selected: addr=%u,port=%u\n",
-	////////       selected_backend->address,
-	////////       selected_backend->port);
-
-	endpoint_t backend = {
-		.address =
-		  (172 << 24 | 17 << 16 | 0 << 8 | 2 << 0), // container ip,
-		.port = 80,
-	};
-	endpoint_t* selected_backend = &backend;
-
-	// route to that backend and keep track
-	// of the traffic that should go towards
-	// such backend.
-	connection_t new_conn = {
-		.src =
-		  {
-		    .address = (172 << 24 | 17 << 16 | 0 << 8 |
-		                1 << 0), // our machine ip
-		    .port    = conn.src.port,
-		  },
-		.dst =
-		  {
-		    .address = selected_backend->address,
-		    .port    = conn.src.port,
-		  },
-	};
-
-	map_update_elem(&llb_h_dnat, &conn, &new_conn, 0);
-
-	// keep track of the traffic that will come
-	// back from such connection.
-	connection_t snat_conn_key = {
-		.src = new_conn.dst,
-		.dst = new_conn.src,
-	};
-
-	connection_t snat_conn_value = {
-		.src = conn.dst,
-		.dst = conn.src,
-	};
-
-	// map_update_elem(&llb_h_snat, &snat_conn_key, &snat_conn_value, 0);
-
-	// perform the actual replacement
-
-	ret =
-	  l4_replace_skb_daddr(skb, &conn.dst.address, &new_conn.dst.address);
+	ret = l4_replace_skb_addr(skb,
+	                          &conn.dst.address,
+	                          &new_conn.dst.address,
+	                          offsetof(struct iphdr, daddr));
 	if (ret & LLB_ERR) {
 		printk("[egr] failed to replace skb destination addr");
+		return TC_ACT_UNSPEC;
+	}
+
+	ret = l4_replace_skb_addr(skb,
+	                          &conn.src.address,
+	                          &new_conn.src.address,
+	                          offsetof(struct iphdr, saddr));
+	if (ret & LLB_ERR) {
+		printk("[egr] failed to replace skb source addr");
 		return TC_ACT_UNSPEC;
 	}
 

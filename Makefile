@@ -1,4 +1,4 @@
-DEVICE  ?= "enp0s3"
+DEVICE  ?= "docker0"
 VERSION ?= $(shell cat ./VERSION.txt)
 
 

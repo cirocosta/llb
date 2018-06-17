@@ -42,8 +42,30 @@ static inline int __attribute__((always_inline)) l3_is_ip(struct __sk_buff* skb)
 	return LLB_OK;
 }
 
-static inline void
-l3_extract_address_le(__le32 addr, __u8 ip_addr[4])
+static inline __le32 __inline__ l3_bytes_to_le32(__u8 ip_addr[4])
+{
+	__le32 res = 0;
+	res += ip_addr[3] << 24;
+	res += ip_addr[2] << 16;
+	res += ip_addr[1] << 8;
+	res += ip_addr[0];
+
+	return res;
+}
+
+static inline __le32 __inline__ l3_bytes_to_be32(__u8 ip_addr[4])
+{
+	__be32 res = 0;
+	res += ip_addr[0] << 24;
+	res += ip_addr[1] << 16;
+	res += ip_addr[2] << 8;
+	res += ip_addr[3];
+
+	return res;
+}
+
+static inline void __inline__ l3_extract_address_le(__le32 addr,
+                                                    __u8   ip_addr[4])
 {
 	ip_addr[0] = addr & ((1 << 8) - 1);
 	ip_addr[1] = (addr >> 8) & ((1 << 8) - 1);
@@ -51,8 +73,8 @@ l3_extract_address_le(__le32 addr, __u8 ip_addr[4])
 	ip_addr[3] = (addr >> 24);
 }
 
-static inline void
-l3_extract_address_be(__be32 addr, __u8 ip_addr[4])
+static inline void __inline__ l3_extract_address_be(__be32 addr,
+                                                    __u8   ip_addr[4])
 {
 	ip_addr[0] = (addr >> 24);
 	ip_addr[1] = (addr >> 16) & ((1 << 8) - 1);
