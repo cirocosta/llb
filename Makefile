@@ -1,5 +1,4 @@
-DEVICE  ?= "lo"
-HOOK    ?= "ingress"
+DEVICE  ?= "docker0"
 VERSION ?= $(shell cat ./VERSION.txt)
 
 
@@ -47,10 +46,14 @@ setup-device: clean-device build
 		clsact
 	sudo tc filter add \
 		dev $(DEVICE) \
-		$(HOOK) \
-		bpf da \
-		obj ./classifier/main.o
-
+		ingress \
+		bpf direct-action \
+		object-file ./classifier/main.o section ingress
+	sudo tc filter add \
+		dev $(DEVICE) \
+		egress \
+		bpf direct-action \
+		object-file ./classifier/main.o section egress
 
 clean-device:
 	sudo tc qdisc del \

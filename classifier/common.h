@@ -1,6 +1,8 @@
 #ifndef __COMMON_H
 #define __COMMON_H
 
+#include <asm/types.h>
+
 #define printk(fmt, ...)                                                       \
 	({                                                                     \
 		char _fmt[] = fmt;                                             \
@@ -8,8 +10,26 @@
 	})
 
 #define LLB_OK 0
-#define LLB_ERR -1
-#define LLB_NOT_L4 -2
-#define LLB_MALFORMED_L4 -4
+#define LLB_ERR 1
+
+/**
+ * endpoint_t represents a L4 endpoint that acts
+ * either as a client or a server in a connection.
+ */
+typedef struct endpoint {
+	// The IPV4 address of the source connection.
+	__u32 address;
+	// The port of the source connection.
+	__u16 port;
+} endpoint_t;
+
+/**
+ * connection_t represents a full L4 connection that
+ * has information about a givne source and a destination.
+ */
+typedef struct connection {
+	endpoint_t src;
+	endpoint_t dst;
+} connection_t;
 
 #endif

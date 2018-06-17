@@ -1,4 +1,4 @@
-#include "../classifier/ip.h"
+#include "../classifier/l3.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,8 +22,8 @@ main(int argc, char** argv)
 		return 1;
         }
 
-	ip_extract_address_be(addr, ip_addr_be);
-	ip_extract_address_le(addr, ip_addr_le);
+	l3_extract_address_be(addr, ip_addr_be);
+	l3_extract_address_le(addr, ip_addr_le);
 
 	printf("big endian:     %u.%u.%u.%u\n",
 	       ip_addr_be[0],

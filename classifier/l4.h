@@ -9,37 +9,7 @@
 
 #include "./common.h"
 
-/**
- * endpoint_t represents a L4 endpoint that acts
- * either as a client or a server in a connection.
- */
-typedef struct endpoint {
-	// The IPV4 address of the source connection.
-	__u32 address;
-	// The port of the source connection.
-	__u16 port;
-} endpoint_t;
-
-/**
- * connection_t represents a full L4 connection that
- * has information about a givne source and a destination.
- */
-typedef struct connection {
-	endpoint_t src;
-	endpoint_t dst;
-} connection_t;
-
-/**
- * Takes a skb data range extracts the corresponding L4 endpoints
- * from it.
- *
- * Returns:
- * - LLB_NOT_L4 if not tcp or udp; and
- * - LLB_ERR on error.
- */
-static inline int __inline__ l4_extract_endpoints(void*         data,
-                                                  void*         data_end,
-                                                  connection_t* conn)
+static inline int __inline__ l4_is_tcp_packet(void* data, void* data_end)
 {
 	struct iphdr*  ip;
 	struct tcphdr* tcp;
@@ -66,7 +36,7 @@ static inline int __inline__ l4_extract_endpoints(void*         data,
 	 */
 	if ((void*)ip + sizeof(struct iphdr) > data_end) {
 		printk("not enough data for proper iphdr struct\n");
-		return LLB_NOT_L4;
+		return LLB_ERR;
 	}
 
 	/**
@@ -81,7 +51,7 @@ static inline int __inline__ l4_extract_endpoints(void*         data,
 	if (ip->ihl != 5) {
 		printk(
 		  "ip->ihl must equal to 5 to match the internal iphdr size\n");
-		return LLB_NOT_L4;
+		return LLB_ERR;
 	}
 
 	/**
@@ -89,7 +59,7 @@ static inline int __inline__ l4_extract_endpoints(void*         data,
 	 */
 	if (ip->protocol != IPPROTO_TCP) {
 		printk("not tcp\n");
-		return LLB_NOT_L4;
+		return LLB_ERR;
 	}
 
 	/**
@@ -99,7 +69,34 @@ static inline int __inline__ l4_extract_endpoints(void*         data,
 	tcp = data + off;
 	if ((void*)tcp + sizeof(struct tcphdr) > data_end) {
 		printk("not enough data for proper tcphdr struct\n");
-		return LLB_MALFORMED_L4;
+		return LLB_ERR;
+	}
+
+	return LLB_OK;
+}
+
+/**
+ * Takes a skb data range extracts the corresponding L4 endpoints
+ * from it.
+ *
+ * Returns:
+ * - LLB_NOT_L4 if not tcp or udp; and
+ * - LLB_ERR on error.
+ */
+static inline int __inline__ l4_extract_endpoints(void*         data,
+                                                  void*         data_end,
+                                                  connection_t* conn)
+{
+	struct iphdr*  ip  = data + sizeof(struct ethhdr);
+	struct tcphdr* tcp = (void*)ip + sizeof(struct iphdr);
+
+	/**
+	 * Verifiy whether the whole header struct can exist in the
+	 * packet.
+	 */
+	if ((void*)tcp + sizeof(struct tcphdr) > data_end) {
+		printk("not enough data for proper tcphdr struct\n");
+		return LLB_ERR;
 	}
 
 	/**
