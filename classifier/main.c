@@ -69,12 +69,11 @@ struct bpf_elf_map __section_maps llb_h_cnx = {
  */
 __section("classifier") int cls_main(struct __sk_buff* skb)
 {
-	int        ret      = 0;
-	void*      data     = (void*)(long)skb->data;
-	void*      data_end = (void*)(long)skb->data_end;
-	endpoint_t source   = { 0 };
-	endpoint_t dest     = { 0 };
-	__u32      off;
+	int          ret      = 0;
+	void*        data     = (void*)(long)skb->data;
+	void*        data_end = (void*)(long)skb->data_end;
+	connection_t conn     = { .src = { 0 }, .dst = { 0 } };
+	__u32        off;
 
 	/**
 	 * `skb->protocol` [1] corresponds to the packet protocol as seen
@@ -110,21 +109,21 @@ __section("classifier") int cls_main(struct __sk_buff* skb)
 		return TC_ACT_UNSPEC;
 	}
 
-	ret = l4_extract_endpoints(data, data_end, &source, &dest);
+	ret = l4_extract_endpoints(data, data_end, &conn);
 	if (ret != LLB_OK) {
 		return TC_ACT_UNSPEC;
 	}
 
-	if (dest.port != LLB_FRONTEND_PORT) {
+	if (conn.dst.port != LLB_FRONTEND_PORT) {
 		printk("packet not destinet to frontend port\n");
 		return TC_ACT_UNSPEC;
 	}
 
-	printk("src(addr=%u,port=%u)\n", source.address, source.port);
-	printk("dst(addr=%u,port=%u)\n", dest.address, dest.port);
+	printk("src(addr=%u,port=%u)\n", conn.src.address, conn.src.port);
+	printk("dst(addr=%u,port=%u)\n", conn.dst.address, conn.dst.port);
 
-	__u32      key              = 1;
-	backend_t* selected_backend = map_lookup_elem(&llb_h_bnx, &key);
+	__u32       key              = 1;
+	endpoint_t* selected_backend = map_lookup_elem(&llb_h_bnx, &key);
 	if (!selected_backend) {
 		printk("no backend selected\n");
 		return TC_ACT_UNSPEC;

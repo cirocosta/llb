@@ -21,6 +21,15 @@ typedef struct endpoint {
 } endpoint_t;
 
 /**
+ * connection_t represents a full L4 connection that
+ * has information about a givne source and a destination.
+ */
+typedef struct connection {
+	endpoint_t src;
+	endpoint_t dst;
+} connection_t;
+
+/**
  * Takes a skb data range extracts the corresponding L4 endpoints
  * from it.
  *
@@ -28,10 +37,9 @@ typedef struct endpoint {
  * - LLB_NOT_L4 if not tcp or udp; and
  * - LLB_ERR on error.
  */
-static inline int __inline__ l4_extract_endpoints(void*       data,
-                                                  void*       data_end,
-                                                  endpoint_t* source,
-                                                  endpoint_t* dest)
+static inline int __inline__ l4_extract_endpoints(void*         data,
+                                                  void*         data_end,
+                                                  connection_t* conn)
 {
 	struct iphdr*  ip;
 	struct tcphdr* tcp;
@@ -98,10 +106,10 @@ static inline int __inline__ l4_extract_endpoints(void*       data,
 	 * Fill source and dest with the values all in network byte
 	 * order.
 	 */
-	source->address = htonl(ip->saddr);
-	dest->address   = htonl(ip->daddr);
-	source->port    = htons(tcp->source);
-	dest->port      = htons(tcp->dest);
+	conn->src.address = htonl(ip->saddr);
+	conn->dst.address = htonl(ip->daddr);
+	conn->src.port    = htons(tcp->source);
+	conn->dst.port    = htons(tcp->dest);
 
 	return LLB_OK;
 }

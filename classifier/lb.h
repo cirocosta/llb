@@ -3,6 +3,4 @@
 
 #include <asm/types.h>
 
-typedef endpoint_t backend_t;
-
 #endif
