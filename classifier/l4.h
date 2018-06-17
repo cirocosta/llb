@@ -8,6 +8,50 @@
 #include <linux/tcp.h>
 
 #include "./common.h"
+#include "./l3.h"
+
+#define LLB_L4_OFF LLB_L3_OFF + sizeof(struct iphdr)
+#define LLB_L4_CSUM_OFF (LLB_L4_OFF + offsetof(struct tcphdr, check))
+
+static inline int __inline__ l4_replace_skb_daddr(struct __sk_buff* skb,
+                                                  __u32* daddr_before,
+                                                  __u32* daddr_after)
+{
+	int ret = 0;
+
+	ret = skb_store_bytes(
+	  skb,
+	  LLB_L3_OFF + offsetof(struct iphdr, daddr), // where in `skb->data`
+	  daddr_after, // pointer to where to copy `n` bytes from
+	  4,           // `n` bytes to copy
+	  0            // flags: 0th bit: if set -> recompute csum
+	);
+	if (ret < 0) {
+		printk("couldn't store new daddr bytes in skb\n");
+		return LLB_ERR;
+	}
+
+	ret = l4_csum_replace(
+	  skb,
+	  LLB_L4_CSUM_OFF, // where in `skb->data` the tcp checksum lives
+	  *daddr_before,   // address before
+	  *daddr_after,    // address after
+	  4 | (1 << 4)); // the first 3 bits indicate the size of the addr; the
+	                 // 4th, whether it's a pseudo header
+	if (ret != 0) {
+		printk("failed to replace l4 csum\n");
+		return LLB_ERR;
+	}
+
+	ret =
+	  l3_csum_replace(skb, LLB_L3_CSUM_OFF, *daddr_before, *daddr_after, 4);
+	if (ret != 0) {
+		printk("failed to replace l3 csum\n");
+		return LLB_ERR;
+	}
+
+	return LLB_OK;
+}
 
 static inline int __inline__ l4_is_tcp_packet(void* data, void* data_end)
 {

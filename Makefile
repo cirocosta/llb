@@ -1,4 +1,4 @@
-DEVICE  ?= "docker0"
+DEVICE  ?= "enp0s3"
 VERSION ?= $(shell cat ./VERSION.txt)
 
 
@@ -40,7 +40,7 @@ logs:
 	sudo tc exec bpf dbg
 
 
-setup-device: clean-device build
+setup-tc: clean-tc build
 	sudo tc qdisc add \
 		dev $(DEVICE) \
 		clsact
@@ -55,9 +55,9 @@ setup-device: clean-device build
 		bpf direct-action \
 		object-file ./classifier/main.o section egress
 
-clean-device:
+clean-tc:
 	sudo tc qdisc del \
 		dev $(DEVICE) \
 		clsact || true
-	sudo rm -f /sys/fs/bpf/tc/globals/llb_h_bnx || true
-	sudo rm -f /sys/fs/bpf/tc/globals/llb_h_cnx || true
+	sudo find /sys/fs/bpf/tc/globals \
+		-name "llb_*" -type f -delete

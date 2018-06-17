@@ -4,6 +4,10 @@
 #include "./common.h"
 #include <iproute2/bpf_api.h>
 #include <linux/if_ether.h>
+#include <linux/ip.h>
+
+#define LLB_L3_OFF sizeof(struct ethhdr)
+#define LLB_L3_CSUM_OFF (ETH_HLEN + offsetof(struct iphdr, check))
 
 /**
  * Verifies whether the given skb corresponds to

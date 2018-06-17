@@ -109,16 +109,24 @@ __section("egress") int cls_egress(struct __sk_buff* __attribute__((unused))
 
 	// pick a backend
 
-	__u32       key              = 1;
-	endpoint_t* selected_backend = map_lookup_elem(&llb_h_bnx, &key);
-	if (!selected_backend) {
-		printk("no backend selected\n");
-		return TC_ACT_UNSPEC;
-	}
+	////////__u32       key              = 1;
+	////////endpoint_t* selected_backend = map_lookup_elem(&llb_h_bnx,
+	///&key);
+	////////if (!selected_backend) {
+	////////	printk("no backend selected\n");
+	////////	return TC_ACT_UNSPEC;
+	////////}
 
-	printk("backend selected: addr=%u,port=%u\n",
-	       selected_backend->address,
-	       selected_backend->port);
+	////////printk("backend selected: addr=%u,port=%u\n",
+	////////       selected_backend->address,
+	////////       selected_backend->port);
+
+	endpoint_t backend = {
+		.address =
+		  (172 << 24 | 17 << 16 | 0 << 8 | 2 << 0), // container ip,
+		.port = 80,
+	};
+	endpoint_t* selected_backend = &backend;
 
 	// route to that backend and keep track
 	// of the traffic that should go towards
@@ -126,9 +134,9 @@ __section("egress") int cls_egress(struct __sk_buff* __attribute__((unused))
 	connection_t new_conn = {
 		.src =
 		  {
-		    .address =
-		      (172 << 24 | 17 << 16 | 0 << 8 | 1), // our machine ip
-		    .port = conn.src.port,
+		    .address = (172 << 24 | 17 << 16 | 0 << 8 |
+		                1 << 0), // our machine ip
+		    .port    = conn.src.port,
 		  },
 		.dst =
 		  {
@@ -151,7 +159,16 @@ __section("egress") int cls_egress(struct __sk_buff* __attribute__((unused))
 		.dst = conn.src,
 	};
 
-	map_update_elem(&llb_h_snat, &snat_conn_key, &snat_conn_value, 0);
+	// map_update_elem(&llb_h_snat, &snat_conn_key, &snat_conn_value, 0);
+
+	// perform the actual replacement
+
+	ret =
+	  l4_replace_skb_daddr(skb, &conn.dst.address, &new_conn.dst.address);
+	if (ret & LLB_ERR) {
+		printk("[egr] failed to replace skb destination addr");
+		return TC_ACT_UNSPEC;
+	}
 
 	return ret;
 };

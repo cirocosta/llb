@@ -26,6 +26,9 @@ struct bpf_elf_map __section_maps llb_h_bnx = {
 	.max_elem   = LLB_BACKENDS_ARR_MAX_ELEM,
 };
 
+/**
+ * TODO
+ */
 struct bpf_elf_map __section_maps llb_h_snat = {
 	.type       = BPF_MAP_TYPE_HASH,
 	.size_key   = sizeof(connection_t),
@@ -34,6 +37,9 @@ struct bpf_elf_map __section_maps llb_h_snat = {
 	.max_elem   = LLB_CONNECTIONS_MAP_MAX_ELEM,
 };
 
+/**
+ * TODO
+ */
 struct bpf_elf_map __section_maps llb_h_dnat = {
 	.type       = BPF_MAP_TYPE_HASH,
 	.size_key   = sizeof(connection_t),
