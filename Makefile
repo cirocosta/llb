@@ -1,5 +1,6 @@
-DEVICE  ?= "docker0"
-VERSION ?= $(shell cat ./VERSION.txt)
+INGRESS_DEVICE  ?= "enp0s8"
+EGRESS_DEVICE   ?= "docker0"
+VERSION         ?= $(shell cat ./VERSION.txt)
 
 
 build:
@@ -42,22 +43,29 @@ logs:
 
 setup-tc: clean-tc build
 	sudo tc qdisc add \
-		dev $(DEVICE) \
+		dev $(INGRESS_DEVICE) \
 		clsact
 	sudo tc filter add \
-		dev $(DEVICE) \
+		dev $(INGRESS_DEVICE) \
 		ingress \
 		bpf direct-action \
 		object-file ./classifier/main.o section ingress
+	sudo tc qdisc add \
+		dev $(EGRESS_DEVICE) \
+		clsact
 	sudo tc filter add \
-		dev $(DEVICE) \
+		dev $(EGRESS_DEVICE) \
 		egress \
 		bpf direct-action \
 		object-file ./classifier/main.o section egress
 
+
 clean-tc:
 	sudo tc qdisc del \
-		dev $(DEVICE) \
+		dev $(INGRESS_DEVICE) \
+		clsact || true
+	sudo tc qdisc del \
+		dev $(EGRESS_DEVICE) \
 		clsact || true
 	sudo find /sys/fs/bpf/tc/globals \
-		-name "llb_*" -type f -delete
+		-name "llb_*" -type f -delete || true
