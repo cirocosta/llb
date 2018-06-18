@@ -11,8 +11,14 @@ build:
 		-v
 	clang -O2 -Wall -g \
 		-target bpf \
+		-DLLB_INGRESS \
 		-c ./classifier/main.c \
-		-o ./classifier/main.o
+		-o ./classifier/ingress.o
+	clang -O2 -Wall -g \
+		-target bpf \
+		-DLLB_EGRESS \
+		-c ./classifier/main.c \
+		-o ./classifier/egress.o
 .PHONY: build
 
 
@@ -31,10 +37,15 @@ fmt:
 	go fmt ./...
 
 
-debug: build
+debug-ingress: build
 	llvm-objdump -S \
 		-no-show-raw-insn \
-		./classifier/main.o
+		./classifier/ingress.o
+
+debug-egress: build
+	llvm-objdump -S \
+		-no-show-raw-insn \
+		./classifier/egress.o
 
 
 logs:

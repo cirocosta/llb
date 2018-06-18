@@ -35,6 +35,7 @@
 #include "./l4.h"
 #include "./maps.h"
 
+#ifdef LLB_INGRESS
 __section("ingress") int cls_ingress(struct __sk_buff* skb)
 {
 	int   ret      = 0;
@@ -68,7 +69,9 @@ __section("ingress") int cls_ingress(struct __sk_buff* skb)
 
 	return TC_ACT_UNSPEC;
 }
+#endif
 
+#ifdef LLB_EGRESS
 __section("egress") int cls_egress(struct __sk_buff* __attribute__((unused))
                                    skb)
 {
@@ -138,5 +141,6 @@ __section("egress") int cls_egress(struct __sk_buff* __attribute__((unused))
 
 	return ret;
 };
+#endif
 
 BPF_LICENSE("GPL");

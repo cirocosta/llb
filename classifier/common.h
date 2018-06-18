@@ -2,10 +2,17 @@
 #define __COMMON_H
 
 #include <asm/types.h>
+#include <iproute2/bpf_api.h>
+
+#ifdef LLB_INGRESS
+#define LLB_PRINTK_PREFIX "[ing] "
+#else
+#define LLB_PRINTK_PREFIX "[egr] "
+#endif
 
 #define printk(fmt, ...)                                                       \
 	({                                                                     \
-		char _fmt[] = fmt;                                             \
+		char _fmt[] = LLB_PRINTK_PREFIX fmt;                           \
 		trace_printk(_fmt, sizeof(_fmt), ##__VA_ARGS__);               \
 	})
 
@@ -28,8 +35,21 @@ typedef struct endpoint {
  * has information about a givne source and a destination.
  */
 typedef struct connection {
+	// The source endpoint.
 	endpoint_t src;
+	// The destination endpoint.
 	endpoint_t dst;
 } connection_t;
+
+/**
+ * Makes use of the printk facility to print a representation
+ * of a given connection
+ */
+static inline void __attribute__((always_inline))
+print_connection(connection_t* conn)
+{
+	printk("src: addr=%u port=%u\n", conn->src.address, conn->src.port);
+	printk("dest: addr=%u port=%u\n", conn->dst.address, conn->dst.port);
+}
 
 #endif
